@@ -118,7 +118,7 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
         stiffness: 0.2,
         render: {
           visible: true,
-          strokeStyle: '#00ff9d'
+          strokeStyle: getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#00ff9d'
         }
       } as any
     });
