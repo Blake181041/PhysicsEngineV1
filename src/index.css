@@ -9,7 +9,7 @@
   --color-brand-surface: #1a1a1a;
   --color-brand-border: #333333;
   --color-brand-text: #e0e0e0;
-  --color-brand-accent: #00ff9d; /* Matrix-like green */
+  --color-brand-accent: var(--brand-accent, #00ff9d); /* Dynamic accent color */
 }
 
 @layer base {
