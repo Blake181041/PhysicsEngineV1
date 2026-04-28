@@ -23,7 +23,18 @@ interface ControlPanelProps {
   setWireframes: (val: boolean) => void;
   showVelocity: boolean;
   setShowVelocity: (val: boolean) => void;
+  accentColor: string;
+  setAccentColor: (val: string) => void;
 }
+
+const THEMES = [
+  { name: 'Matrix', color: '#00ff9d' },
+  { name: 'Ruby', color: '#ff4d4d' },
+  { name: 'Amber', color: '#ffb347' },
+  { name: 'Electric', color: '#4d94ff' },
+  { name: 'Violet', color: '#b366ff' },
+  { name: 'Rose', color: '#ff66b3' },
+];
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
   onAddBox,
@@ -44,7 +55,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   wireframes,
   setWireframes,
   showVelocity,
-  setShowVelocity
+  setShowVelocity,
+  accentColor,
+  setAccentColor
 }) => {
   return (
     <div className="w-full md:w-80 bg-brand-surface border-r border-brand-border h-full flex flex-col p-6 overflow-y-auto custom-scrollbar">
@@ -59,6 +72,27 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       </div>
 
       <section className="space-y-8 pb-12">
+        {/* THEME PALETTE */}
+        <div>
+          <label className="text-[10px] font-mono uppercase tracking-widest text-brand-text/50 mb-4 block flex items-center gap-2">
+            <LayoutGrid className="w-3 h-3" /> System Theme
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {THEMES.map((t) => (
+              <button
+                key={t.name}
+                onClick={() => setAccentColor(t.color)}
+                className={cn(
+                  "w-8 h-8 rounded-sm border transition-all hover:scale-110 active:scale-95",
+                  accentColor === t.color ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-transparent"
+                )}
+                style={{ backgroundColor: t.color }}
+                title={t.name}
+              />
+            ))}
+          </div>
+        </div>
+
         {/* ENTITIES */}
         <div>
           <label className="text-[10px] font-mono uppercase tracking-widest text-brand-text/50 mb-4 block flex items-center gap-2">
