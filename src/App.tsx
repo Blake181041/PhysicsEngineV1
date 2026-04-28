@@ -18,12 +18,17 @@ export default function App() {
   const [friction, setFriction] = useState(0.1);
   const [wireframes, setWireframes] = useState(false);
   const [showVelocity, setShowVelocity] = useState(false);
+  const [accentColor, setAccentColor] = useState('#00ff9d');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--brand-accent', accentColor);
+  }, [accentColor]);
 
   const getSpawnPos = () => {
     const x = 100 + Math.random() * (window.innerWidth - 500);
@@ -34,20 +39,32 @@ export default function App() {
   const handleAddBox = () => {
     const { x, y } = getSpawnPos();
     const size = 30 + Math.random() * 40;
-    sceneRef.current?.addBox(x, y, size, size, { restitution, friction });
+    sceneRef.current?.addBox(x, y, size, size, { 
+      restitution, 
+      friction,
+      render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+    });
   };
 
   const handleAddCircle = () => {
     const { x, y } = getSpawnPos();
     const r = 20 + Math.random() * 20;
-    sceneRef.current?.addCircle(x, y, r, { restitution, friction });
+    sceneRef.current?.addCircle(x, y, r, { 
+      restitution, 
+      friction,
+      render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+    });
   };
 
   const handleTower = () => {
     const startX = 300 + Math.random() * 200;
     const size = 40;
     for (let i = 0; i < 8; i++) {
-      sceneRef.current?.addBox(startX, window.innerHeight - (i * size) - 100, size, size, { restitution, friction });
+      sceneRef.current?.addBox(startX, window.innerHeight - (i * size) - 100, size, size, { 
+        restitution, 
+        friction,
+        render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+      });
     }
   };
 
@@ -55,7 +72,11 @@ export default function App() {
     for (let i = 0; i < 15; i++) {
       setTimeout(() => {
         const { x } = getSpawnPos();
-        sceneRef.current?.addCircle(x, -50, 10 + Math.random() * 15, { restitution, friction });
+        sceneRef.current?.addCircle(x, -50, 10 + Math.random() * 15, { 
+          restitution, 
+          friction,
+          render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+        });
       }, i * 100);
     }
   };
@@ -110,6 +131,8 @@ export default function App() {
                 setWireframes={setWireframes}
                 showVelocity={showVelocity}
                 setShowVelocity={setShowVelocity}
+                accentColor={accentColor}
+                setAccentColor={setAccentColor}
               />
             </motion.div>
 
