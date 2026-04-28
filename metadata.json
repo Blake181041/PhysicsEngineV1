@@ -1,0 +1,6 @@
+{
+  "name": "Gravity Lab",
+  "description": "An interactive 2D physics sandbox for building and simulating complex physical systems.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
