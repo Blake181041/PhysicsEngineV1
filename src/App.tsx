@@ -8,6 +8,7 @@ import PhysicsScene, { PhysicsSceneHandle } from './components/PhysicsScene';
 import ControlPanel from './components/ControlPanel';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X } from 'lucide-react';
+import { cn } from './lib/utils';
 
 export default function App() {
   const sceneRef = useRef<PhysicsSceneHandle>(null);
@@ -18,6 +19,7 @@ export default function App() {
   const [friction, setFriction] = useState(0.1);
   const [wireframes, setWireframes] = useState(false);
   const [showVelocity, setShowVelocity] = useState(false);
+  const [liquidFx, setLiquidFx] = useState(false);
   const [accentColor, setAccentColor] = useState('#00ff9d');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -31,7 +33,12 @@ export default function App() {
   }, [accentColor]);
 
   const getSpawnPos = () => {
-    const x = 100 + Math.random() * (window.innerWidth - 500);
+    // dynamically check width for better spawning on mobile vs desktop
+    const width = window.innerWidth;
+    const sidebarWidth = width < 768 ? 0 : 320;
+    const availableWidth = width - sidebarWidth;
+    
+    const x = (sidebarWidth) + 50 + Math.random() * (availableWidth - 100);
     const y = 50 + Math.random() * 100;
     return { x, y };
   };
@@ -56,8 +63,51 @@ export default function App() {
     });
   };
 
+  const handleAddTriangle = () => {
+    const { x, y } = getSpawnPos();
+    const radius = 25 + Math.random() * 15;
+    sceneRef.current?.addPolygon(x, y, 3, radius, { 
+      restitution, 
+      friction,
+      render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+    });
+  };
+
+  const handleAddOctagon = () => {
+    const { x, y } = getSpawnPos();
+    const radius = 25 + Math.random() * 15;
+    sceneRef.current?.addPolygon(x, y, 8, radius, { 
+      restitution, 
+      friction,
+      render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+    });
+  };
+
+  const handleAddPentagon = () => {
+    const { x, y } = getSpawnPos();
+    const radius = 25 + Math.random() * 15;
+    sceneRef.current?.addPolygon(x, y, 5, radius, { 
+      restitution, 
+      friction,
+      render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+    });
+  };
+
+  const handleAddHexagon = () => {
+    const { x, y } = getSpawnPos();
+    const radius = 25 + Math.random() * 15;
+    sceneRef.current?.addPolygon(x, y, 6, radius, { 
+      restitution, 
+      friction,
+      render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+    });
+  };
+
   const handleTower = () => {
-    const startX = 300 + Math.random() * 200;
+    const width = window.innerWidth;
+    const sidebarWidth = width < 768 ? 0 : 320;
+    const availableWidth = width - sidebarWidth;
+    const startX = sidebarWidth + (availableWidth / 2);
     const size = 40;
     for (let i = 0; i < 8; i++) {
       sceneRef.current?.addBox(startX, window.innerHeight - (i * size) - 100, size, size, { 
@@ -69,16 +119,111 @@ export default function App() {
   };
 
   const handleRain = () => {
-    for (let i = 0; i < 15; i++) {
+    // Increased particle count and better spread
+    for (let i = 0; i < 50; i++) {
       setTimeout(() => {
-        const { x } = getSpawnPos();
-        sceneRef.current?.addCircle(x, -50, 10 + Math.random() * 15, { 
-          restitution, 
+        const width = window.innerWidth;
+        const sidebarWidth = width < 768 ? 0 : 320;
+        const availableWidth = width - sidebarWidth;
+        const x = sidebarWidth + Math.random() * availableWidth;
+        const radius = 5 + Math.random() * 10;
+        sceneRef.current?.addCircle(x, 20, radius, { 
+          restitution: restitution * 1.2, // rain is bouncy 
           friction,
+          density: 0.001,
+          label: 'liquid',
           render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
         });
-      }, i * 100);
+      }, i * 40);
     }
+  };
+
+  const handleFlood = () => {
+    const width = window.innerWidth;
+    const sidebarWidth = width < 768 ? 0 : 320;
+    const availableWidth = width - sidebarWidth;
+    
+    const count = 200; // More particles
+    const radius = 10; // Larger particles survive the filter better
+    const streamWidth = 60; // Narrower stream for better clustering
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const x = sidebarWidth + (availableWidth / 2) - streamWidth/2 + Math.random() * streamWidth;
+        sceneRef.current?.addCircle(x, 20, radius, { 
+          restitution: 0.1, 
+          friction: 0.001,
+          velocity: { x: (Math.random() - 0.5) * 2, y: 5 }, // Initial downward velocity
+          density: 0.005, // Slightly lighter so they don't just sink like lead
+          label: 'liquid',
+          render: { fillStyle: accentColor, strokeStyle: 'transparent' }
+        });
+      }, i * 15); // Faster stream
+    }
+  };
+
+  const handleExplosion = () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const sidebarWidth = width < 768 ? 0 : 320;
+    const availableWidth = width - sidebarWidth;
+    
+    const centerX = sidebarWidth + (availableWidth / 2);
+    const centerY = height / 2;
+    
+    createExplosionEffect(centerX, centerY);
+  };
+
+  const createExplosionEffect = (x: number, y: number) => {
+    const count = 40;
+    const radius = 8;
+    
+    // Apply physical force
+    sceneRef.current?.applyExplosion(x, y, 400, 2);
+
+    // Visual particles
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.5);
+      const force = 8 + Math.random() * 12;
+      
+      sceneRef.current?.addCircle(x, y, radius, {
+        restitution: 0.8,
+        friction: 0.01,
+        velocity: { 
+          x: Math.cos(angle) * force, 
+          y: Math.sin(angle) * force 
+        },
+        label: 'liquid',
+        render: { fillStyle: '#ff4d00', strokeStyle: 'transparent' }
+      });
+    }
+  };
+
+  const handleTNT = () => {
+    const { x, y } = getSpawnPos();
+    const size = 50;
+    
+    const tnt = sceneRef.current?.addBox(x, y, size, size, {
+      restitution: 0.1,
+      render: { fillStyle: '#ff0000', strokeStyle: '#fff', lineWidth: 2 }
+    });
+
+    if (!tnt) return;
+
+    let ticks = 0;
+    const maxTicks = 12;
+    const interval = setInterval(() => {
+      ticks++;
+      // Blink effect
+      if (tnt.render) {
+        tnt.render.fillStyle = ticks % 2 === 0 ? '#ff0000' : '#ffffff';
+      }
+      
+      if (ticks >= maxTicks) {
+        clearInterval(interval);
+        createExplosionEffect(tnt.position.x, tnt.position.y);
+        sceneRef.current?.removeBody(tnt);
+      }
+    }, 250);
   };
 
   useEffect(() => {
@@ -114,8 +259,15 @@ export default function App() {
               <ControlPanel
                 onAddBox={handleAddBox}
                 onAddCircle={handleAddCircle}
+                onAddTriangle={handleAddTriangle}
+                onAddOctagon={handleAddOctagon}
+                onAddPentagon={handleAddPentagon}
+                onAddHexagon={handleAddHexagon}
+                onExplosion={handleExplosion}
+                onTNT={handleTNT}
                 onTower={handleTower}
                 onRain={handleRain}
+                onFlood={handleFlood}
                 onClear={() => sceneRef.current?.clear()}
                 gravityX={gravityX}
                 setGravityX={setGravityX}
@@ -131,6 +283,8 @@ export default function App() {
                 setWireframes={setWireframes}
                 showVelocity={showVelocity}
                 setShowVelocity={setShowVelocity}
+                liquidFx={liquidFx}
+                setLiquidFx={setLiquidFx}
                 accentColor={accentColor}
                 setAccentColor={setAccentColor}
               />
@@ -171,7 +325,11 @@ export default function App() {
                 </div>
               </div>
 
-              <PhysicsScene ref={sceneRef} className="w-full h-full cursor-crosshair" />
+              <PhysicsScene 
+                ref={sceneRef} 
+                liquidFx={liquidFx} 
+                className="w-full h-full cursor-crosshair" 
+              />
             </motion.main>
           </>
         )}
