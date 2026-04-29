@@ -22,6 +22,11 @@
   image-rendering: pixelated;
 }
 
+/* Metaball effect for fluid simulation */
+.liquid-fx {
+  filter: blur(6px) contrast(20);
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
