@@ -21,6 +21,7 @@ export default function App() {
   const [showVelocity, setShowVelocity] = useState(false);
   const [liquidFx, setLiquidFx] = useState(false);
   const [accentColor, setAccentColor] = useState('#00ff9d');
+  const [isRainbow, setIsRainbow] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -31,6 +32,20 @@ export default function App() {
   useEffect(() => {
     document.documentElement.style.setProperty('--brand-accent', accentColor);
   }, [accentColor]);
+
+  useEffect(() => {
+    if (!isRainbow) return;
+    
+    let hue = 0;
+    const interval = setInterval(() => {
+      hue = (hue + 0.5) % 360;
+      const color = `hsl(${hue}, 100%, 60%)`;
+      setAccentColor(color);
+      sceneRef.current?.updateRainbowBodies(color);
+    }, 50); // Smoother, slower cycle
+    
+    return () => clearInterval(interval);
+  }, [isRainbow]);
 
   const getSpawnPos = () => {
     // dynamically check width for better spawning on mobile vs desktop
@@ -49,6 +64,7 @@ export default function App() {
     sceneRef.current?.addBox(x, y, size, size, { 
       restitution, 
       friction,
+      label: isRainbow ? 'rainbow' : undefined,
       render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
     });
   };
@@ -59,6 +75,7 @@ export default function App() {
     sceneRef.current?.addCircle(x, y, r, { 
       restitution, 
       friction,
+      label: isRainbow ? 'rainbow' : undefined,
       render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
     });
   };
@@ -69,6 +86,7 @@ export default function App() {
     sceneRef.current?.addPolygon(x, y, 3, radius, { 
       restitution, 
       friction,
+      label: isRainbow ? 'rainbow' : undefined,
       render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
     });
   };
@@ -79,6 +97,7 @@ export default function App() {
     sceneRef.current?.addPolygon(x, y, 8, radius, { 
       restitution, 
       friction,
+      label: isRainbow ? 'rainbow' : undefined,
       render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
     });
   };
@@ -89,6 +108,7 @@ export default function App() {
     sceneRef.current?.addPolygon(x, y, 5, radius, { 
       restitution, 
       friction,
+      label: isRainbow ? 'rainbow' : undefined,
       render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
     });
   };
@@ -99,6 +119,7 @@ export default function App() {
     sceneRef.current?.addPolygon(x, y, 6, radius, { 
       restitution, 
       friction,
+      label: isRainbow ? 'rainbow' : undefined,
       render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
     });
   };
@@ -113,6 +134,7 @@ export default function App() {
       sceneRef.current?.addBox(startX, window.innerHeight - (i * size) - 100, size, size, { 
         restitution, 
         friction,
+        label: isRainbow ? 'rainbow' : undefined,
         render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
       });
     }
@@ -131,7 +153,7 @@ export default function App() {
           restitution: restitution * 1.2, // rain is bouncy 
           friction,
           density: 0.001,
-          label: 'liquid',
+          label: isRainbow ? 'liquid-rainbow' : 'liquid',
           render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
         });
       }, i * 40);
@@ -154,7 +176,7 @@ export default function App() {
           friction: 0.001,
           velocity: { x: (Math.random() - 0.5) * 2, y: 5 }, // Initial downward velocity
           density: 0.005, // Slightly lighter so they don't just sink like lead
-          label: 'liquid',
+          label: isRainbow ? 'liquid-rainbow' : 'liquid',
           render: { fillStyle: accentColor, strokeStyle: 'transparent' }
         });
       }, i * 15); // Faster stream
@@ -192,8 +214,8 @@ export default function App() {
           x: Math.cos(angle) * force, 
           y: Math.sin(angle) * force 
         },
-        label: 'liquid',
-        render: { fillStyle: '#ff4d00', strokeStyle: 'transparent' }
+        label: isRainbow ? 'liquid-rainbow' : 'liquid',
+        render: { fillStyle: isRainbow ? accentColor : '#ff4d00', strokeStyle: 'transparent' }
       });
     }
   };
@@ -204,6 +226,7 @@ export default function App() {
     
     const tnt = sceneRef.current?.addBox(x, y, size, size, {
       restitution: 0.1,
+      label: isRainbow ? 'rainbow' : undefined,
       render: { fillStyle: '#ff0000', strokeStyle: '#fff', lineWidth: 2 }
     });
 
@@ -286,7 +309,12 @@ export default function App() {
                 liquidFx={liquidFx}
                 setLiquidFx={setLiquidFx}
                 accentColor={accentColor}
-                setAccentColor={setAccentColor}
+                setAccentColor={(val) => {
+                  setAccentColor(val);
+                  setIsRainbow(false); // Disable rainbow if a static color is picked
+                }}
+                isRainbow={isRainbow}
+                setIsRainbow={setIsRainbow}
               />
             </motion.div>
 
