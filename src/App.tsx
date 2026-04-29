@@ -22,6 +22,7 @@ export default function App() {
   const [liquidFx, setLiquidFx] = useState(false);
   const [accentColor, setAccentColor] = useState('#00ff9d');
   const [isRainbow, setIsRainbow] = useState(false);
+  const [isTiltEnabled, setIsTiltEnabled] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -46,6 +47,58 @@ export default function App() {
     
     return () => clearInterval(interval);
   }, [isRainbow]);
+
+  useEffect(() => {
+    if (!isTiltEnabled) return;
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      // Gamma is left-to-right tilt in degrees [-90, 90]
+      // Beta is front-to-back tilt in degrees [-180, 180]
+      const { beta, gamma } = event;
+
+      if (beta !== null && gamma !== null) {
+        // Map beta/gamma to gravity values [-2, 2]
+        // Beta: 0 is flat, 90 is upright. We want tilt relative to "flat" or "comfortable angle"
+        // Let's assume user holds phone at ~45 degrees.
+        // Or better, just raw tilt.
+        
+        // Horizontal tilt (X gravity)
+        // Gamma ranges from -90 to 90. Let's map -45 to 45 to -1.5 to 1.5
+        const newGX = Math.max(-1.5, Math.min(1.5, gamma / 45));
+        
+        // Vertical tilt (Y gravity)
+        // Beta ranges from -180 to 180. 
+        // 0 is flat on table. 90 is vertical. 
+        // Let's map 0-90 to -1.5 to 1.5 (down is positive Y)
+        // Actually, if held upright (beta=90), gravity should be down (Y=1)
+        // If tilted forward (beta < 90), gravity shifts "up" (Y decreases)
+        // If tilted backward (beta > 90), gravity shifts "down" (Y increases)
+        const newGY = Math.max(-1.5, Math.min(1.5, (beta - 45) / 45));
+
+        setGravityX(newGX);
+        setGravityY(newGY);
+      }
+    };
+
+    window.addEventListener('deviceorientation', handleOrientation);
+    return () => window.removeEventListener('deviceorientation', handleOrientation);
+  }, [isTiltEnabled]);
+
+  const requestTiltPermission = async () => {
+    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+      try {
+        const permissionState = await (DeviceOrientationEvent as any).requestPermission();
+        if (permissionState === 'granted') {
+          setIsTiltEnabled(true);
+        }
+      } catch (error) {
+        console.error('Orientation permission error:', error);
+      }
+    } else {
+      // For devices that don't need explicit permission
+      setIsTiltEnabled(!isTiltEnabled);
+    }
+  };
 
   const getSpawnPos = () => {
     // dynamically check width for better spawning on mobile vs desktop
@@ -315,6 +368,9 @@ export default function App() {
                 }}
                 isRainbow={isRainbow}
                 setIsRainbow={setIsRainbow}
+                isTiltEnabled={isTiltEnabled}
+                setIsTiltEnabled={setIsTiltEnabled}
+                onRequestTiltPermission={requestTiltPermission}
               />
             </motion.div>
 
