@@ -12,6 +12,7 @@ export interface PhysicsSceneHandle {
   setGravity: (x: number, y: number) => void;
   setTimeScale: (scale: number) => void;
   setRenderOptions: (options: Partial<Matter.IRendererOptions>) => void;
+  updateRainbowBodies: (color: string) => void;
 }
 
 interface PhysicsSceneProps {
@@ -109,6 +110,14 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       if (liquidRenderRef.current) {
         Object.assign(liquidRenderRef.current.options, options);
       }
+    },
+    updateRainbowBodies: (color) => {
+      const allBodies = Matter.Composite.allBodies(engineRef.current.world);
+      allBodies.forEach(body => {
+        if (body.label && body.label.includes('rainbow') && body.render) {
+          body.render.fillStyle = color;
+        }
+      });
     }
   }));
 
@@ -193,7 +202,7 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
     Matter.Events.on(render, 'beforeRender', () => {
       const allBodies = Matter.Composite.allBodies(engine.world);
       for (const body of allBodies) {
-        if (body.label === 'liquid') {
+        if (body.label && body.label.includes('liquid')) {
           // Hide liquid particles from main canvas
           body.render.visible = false;
         } else {
@@ -205,7 +214,7 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
     Matter.Events.on(liquidRender, 'beforeRender', () => {
       const allBodies = Matter.Composite.allBodies(engine.world);
       for (const body of allBodies) {
-        if (body.label === 'liquid') {
+        if (body.label && body.label.includes('liquid')) {
           // Only show liquid particles on liquid canvas
           body.render.visible = true;
         } else {
