@@ -1,13 +1,20 @@
 import React from 'react';
 import { Box, Circle, Trash2, MoveDown, MoveRight, Layers, MousePointer2, Zap, Wind, Eye, EyeOff, Activity, LayoutGrid } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
 interface ControlPanelProps {
   onAddBox: () => void;
   onAddCircle: () => void;
+  onAddTriangle: () => void;
+  onAddOctagon: () => void;
+  onAddPentagon: () => void;
+  onAddHexagon: () => void;
+  onExplosion: () => void;
+  onTNT: () => void;
   onTower: () => void;
   onRain: () => void;
+  onFlood: () => void;
   onClear: () => void;
   gravityX: number;
   setGravityX: (val: number) => void;
@@ -23,15 +30,17 @@ interface ControlPanelProps {
   setWireframes: (val: boolean) => void;
   showVelocity: boolean;
   setShowVelocity: (val: boolean) => void;
+  liquidFx: boolean;
+  setLiquidFx: (val: boolean) => void;
   accentColor: string;
   setAccentColor: (val: string) => void;
 }
 
 const THEMES = [
   { name: 'Matrix', color: '#00ff9d' },
+  { name: 'Ocean', color: '#4d94ff' },
   { name: 'Ruby', color: '#ff4d4d' },
   { name: 'Amber', color: '#ffb347' },
-  { name: 'Electric', color: '#4d94ff' },
   { name: 'Violet', color: '#b366ff' },
   { name: 'Rose', color: '#ff66b3' },
 ];
@@ -39,8 +48,15 @@ const THEMES = [
 const ControlPanel: React.FC<ControlPanelProps> = ({
   onAddBox,
   onAddCircle,
+  onAddTriangle,
+  onAddOctagon,
+  onAddPentagon,
+  onAddHexagon,
+  onExplosion,
+  onTNT,
   onTower,
   onRain,
+  onFlood,
   onClear,
   gravityX,
   setGravityX,
@@ -56,9 +72,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setWireframes,
   showVelocity,
   setShowVelocity,
+  liquidFx,
+  setLiquidFx,
   accentColor,
   setAccentColor
 }) => {
+  const [showMore, setShowMore] = React.useState(false);
+
   return (
     <div className="w-full md:w-80 bg-brand-surface border-r border-brand-border h-full flex flex-col p-6 overflow-y-auto custom-scrollbar">
       <div className="flex items-center gap-3 mb-8">
@@ -113,23 +133,86 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <Circle className="w-4 h-4 text-brand-text/60 group-hover:text-brand-accent transition-colors" />
               <span className="text-[9px] font-mono uppercase tracking-tighter">Sphere</span>
             </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={onTower}
+              onClick={onAddTriangle}
               className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
             >
-              <LayoutGrid className="w-4 h-4 text-brand-text/60 group-hover:text-brand-accent transition-colors" />
-              <span className="text-[9px] font-mono uppercase tracking-tighter">Tower</span>
+              <div className="w-4 h-4 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[14px] border-b-brand-text/60 group-hover:border-b-brand-accent transition-colors" />
+              <span className="text-[9px] font-mono uppercase tracking-tighter">Triangle</span>
             </button>
             <button
-              onClick={onRain}
+              onClick={onAddOctagon}
               className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
             >
-              <Wind className="w-4 h-4 text-brand-text/60 group-hover:text-brand-accent transition-colors" />
-              <span className="text-[9px] font-mono uppercase tracking-tighter">Rain</span>
+              <div className="w-4 h-4 bg-brand-text/60 group-hover:bg-brand-accent transition-colors" style={{ clipPath: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)' }} />
+              <span className="text-[9px] font-mono uppercase tracking-tighter">Octagon</span>
             </button>
           </div>
+
+          <AnimatePresence>
+            {showMore && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden space-y-2 mb-2"
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={onAddPentagon}
+                    className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
+                  >
+                    <div className="w-4 h-4 bg-brand-text/60 group-hover:bg-brand-accent transition-colors" style={{ clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)' }} />
+                    <span className="text-[9px] font-mono uppercase tracking-tighter">Pentagon</span>
+                  </button>
+                  <button
+                    onClick={onAddHexagon}
+                    className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
+                  >
+                    <div className="w-4 h-4 bg-brand-text/60 group-hover:bg-brand-accent transition-colors" style={{ clipPath: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' }} />
+                    <span className="text-[9px] font-mono uppercase tracking-tighter">Hexagon</span>
+                  </button>
+                  <button
+                    onClick={onTNT}
+                    className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
+                  >
+                    <Zap className="w-4 h-4 text-brand-text/60 group-hover:text-red-500 transition-colors" />
+                    <span className="text-[9px] font-mono uppercase tracking-tighter">TNT</span>
+                  </button>
+                  <button
+                    onClick={onFlood}
+                    className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
+                  >
+                    <Wind className="w-4 h-4 text-brand-text/60 group-hover:text-brand-accent transition-colors rotate-90" />
+                    <span className="text-[9px] font-mono uppercase tracking-tighter">Fluid</span>
+                  </button>
+                  <button
+                    onClick={onTower}
+                    className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
+                  >
+                    <LayoutGrid className="w-4 h-4 text-brand-text/60 group-hover:text-brand-accent transition-colors" />
+                    <span className="text-[9px] font-mono uppercase tracking-tighter">Tower</span>
+                  </button>
+                  <button
+                    onClick={onRain}
+                    className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
+                  >
+                    <Wind className="w-4 h-4 text-brand-text/60 group-hover:text-brand-accent transition-colors" />
+                    <span className="text-[9px] font-mono uppercase tracking-tighter">Rain</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <button 
+            onClick={() => setShowMore(!showMore)}
+            className="w-full py-1 text-[8px] font-mono uppercase tracking-[0.2em] text-brand-text/30 hover:text-brand-accent transition-colors flex items-center justify-center gap-2"
+          >
+            <div className="h-[1px] flex-1 bg-brand-border/30" />
+            {showMore ? 'Show Less' : 'Show More'}
+            <div className="h-[1px] flex-1 bg-brand-border/30" />
+          </button>
         </div>
 
         {/* MATERIAL PROPERTIES */}
@@ -255,6 +338,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             >
               <Activity className="w-3 h-3" />
               Vectors
+            </button>
+            <button
+              onClick={() => setLiquidFx(!liquidFx)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 border transition-all text-[9px] font-mono uppercase col-span-2",
+                liquidFx ? "bg-brand-accent/10 border-brand-accent text-brand-accent" : "bg-brand-bg border-brand-border text-brand-text/40"
+              )}
+            >
+              <Activity className="w-3 h-3" />
+              Liquid FX (Realistic)
             </button>
           </div>
         </div>
