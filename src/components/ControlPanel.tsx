@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Circle, Trash2, MoveDown, MoveRight, Layers, MousePointer2, Zap, Wind, Eye, EyeOff, Activity, LayoutGrid, Plus, X } from 'lucide-react';
+import { Box, Circle, Trash2, MoveDown, MoveRight, Layers, MousePointer2, Zap, Wind, Eye, EyeOff, Activity, LayoutGrid, Plus, X, Compass } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
@@ -36,6 +36,9 @@ interface ControlPanelProps {
   setAccentColor: (val: string) => void;
   isRainbow: boolean;
   setIsRainbow: (val: boolean) => void;
+  isTiltEnabled: boolean;
+  setIsTiltEnabled: (val: boolean) => void;
+  onRequestTiltPermission: () => void;
 }
 
 const THEMES = [
@@ -92,7 +95,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   accentColor,
   setAccentColor,
   isRainbow,
-  setIsRainbow
+  setIsRainbow,
+  isTiltEnabled,
+  setIsTiltEnabled,
+  onRequestTiltPermission
 }) => {
   const [showMore, setShowMore] = React.useState(false);
   const [showThemeMenu, setShowThemeMenu] = React.useState(false);
@@ -400,6 +406,26 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 onChange={(e) => setGravityY(parseFloat(e.target.value))}
                 className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
               />
+            </div>
+
+            {/* Mobile Tilt Toggle */}
+            <div className="md:hidden pt-2 border-t border-brand-border/30">
+              <button
+                onClick={onRequestTiltPermission}
+                className={cn(
+                  "w-full flex items-center justify-between px-3 py-2 border transition-all text-[9px] font-mono uppercase",
+                  isTiltEnabled ? "bg-brand-accent/10 border-brand-accent text-brand-accent" : "bg-brand-bg border-brand-border text-brand-text/40"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Compass className={cn("w-3 h-3", isTiltEnabled && "animate-spin-slow")} />
+                  <span>Tilt Control (Mobile)</span>
+                </div>
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  isTiltEnabled ? "bg-brand-accent shadow-[0_0_8px_rgba(0,255,157,0.5)]" : "bg-white/10"
+                )} />
+              </button>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-brand-border/30">
