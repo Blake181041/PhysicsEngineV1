@@ -102,6 +102,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 }) => {
   const [showMore, setShowMore] = React.useState(false);
   const [showThemeMenu, setShowThemeMenu] = React.useState(false);
+  const [showTiltWarning, setShowTiltWarning] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleCustomColor = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -410,22 +411,69 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
             {/* Mobile Tilt Toggle */}
             <div className="md:hidden pt-2 border-t border-brand-border/30">
-              <button
-                onClick={onRequestTiltPermission}
-                className={cn(
-                  "w-full flex items-center justify-between px-3 py-2 border transition-all text-[9px] font-mono uppercase",
-                  isTiltEnabled ? "bg-brand-accent/10 border-brand-accent text-brand-accent" : "bg-brand-bg border-brand-border text-brand-text/40"
+              <AnimatePresence mode="wait">
+                {!showTiltWarning ? (
+                  <motion.button
+                    key="toggle"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => {
+                      if (!isTiltEnabled) {
+                        setShowTiltWarning(true);
+                      } else {
+                        setIsTiltEnabled(false);
+                      }
+                    }}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2 border transition-all text-[9px] font-mono uppercase",
+                      isTiltEnabled ? "bg-brand-accent/10 border-brand-accent text-brand-accent" : "bg-brand-bg border-brand-border text-brand-text/40"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Compass className={cn("w-3 h-3", isTiltEnabled && "animate-spin-slow")} />
+                      <span>Tilt Control (Mobile)</span>
+                    </div>
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      isTiltEnabled ? "bg-brand-accent shadow-[0_0_8px_rgba(0,255,157,0.5)]" : "bg-white/10"
+                    )} />
+                  </motion.button>
+                ) : (
+                  <motion.div 
+                    key="warning"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="bg-brand-bg border border-brand-accent p-3 space-y-3"
+                  >
+                    <div className="flex items-center gap-2 text-brand-accent">
+                      <Compass className="w-4 h-4" />
+                      <span className="text-[10px] font-mono font-bold tracking-widest uppercase">Orientation Warning</span>
+                    </div>
+                    <p className="text-[10px] font-mono leading-relaxed text-brand-text/80 uppercase">
+                      Please enable <span className="text-brand-accent underline underline-offset-2">Portrait Orientation Lock</span> on your device for the best gravity experience.
+                    </p>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setShowTiltWarning(false)}
+                        className="flex-1 py-2 text-[9px] font-mono uppercase bg-brand-border/30 hover:bg-brand-border/50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setShowTiltWarning(false);
+                          onRequestTiltPermission();
+                        }}
+                        className="flex-2 py-2 text-[9px] font-mono uppercase bg-brand-accent text-black font-bold hover:shadow-[0_0_15px_rgba(0,255,157,0.4)] transition-all"
+                      >
+                        I've Enabled It
+                      </button>
+                    </div>
+                  </motion.div>
                 )}
-              >
-                <div className="flex items-center gap-2">
-                  <Compass className={cn("w-3 h-3", isTiltEnabled && "animate-spin-slow")} />
-                  <span>Tilt Control (Mobile)</span>
-                </div>
-                <div className={cn(
-                  "w-1.5 h-1.5 rounded-full",
-                  isTiltEnabled ? "bg-brand-accent shadow-[0_0_8px_rgba(0,255,157,0.5)]" : "bg-white/10"
-                )} />
-              </button>
+              </AnimatePresence>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-brand-border/30">
