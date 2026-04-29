@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Circle, Trash2, MoveDown, MoveRight, Layers, MousePointer2, Zap, Wind, Eye, EyeOff, Activity, LayoutGrid } from 'lucide-react';
+import { Box, Circle, Trash2, MoveDown, MoveRight, Layers, MousePointer2, Zap, Wind, Eye, EyeOff, Activity, LayoutGrid, Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
@@ -34,6 +34,8 @@ interface ControlPanelProps {
   setLiquidFx: (val: boolean) => void;
   accentColor: string;
   setAccentColor: (val: string) => void;
+  isRainbow: boolean;
+  setIsRainbow: (val: boolean) => void;
 }
 
 const THEMES = [
@@ -42,7 +44,20 @@ const THEMES = [
   { name: 'Ruby', color: '#ff4d4d' },
   { name: 'Amber', color: '#ffb347' },
   { name: 'Violet', color: '#b366ff' },
+];
+
+const EXTRA_THEMES = [
   { name: 'Rose', color: '#ff66b3' },
+  { name: 'Deep Purple', color: '#6200ea' },
+  { name: 'Electric Blue', color: '#2979ff' },
+  { name: 'Lime', color: '#c6ff00' },
+  { name: 'Orange', color: '#ff9100' },
+  { name: 'Pink', color: '#ff4081' },
+  { name: 'Teal', color: '#1de9b6' },
+  { name: 'Cyan', color: '#00e5ff' },
+  { name: 'Indigo', color: '#3d5afe' },
+  { name: 'Light Green', color: '#76ff03' },
+  { name: 'Yellow', color: '#ffea00' },
 ];
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -75,9 +90,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   liquidFx,
   setLiquidFx,
   accentColor,
-  setAccentColor
+  setAccentColor,
+  isRainbow,
+  setIsRainbow
 }) => {
   const [showMore, setShowMore] = React.useState(false);
+  const [showThemeMenu, setShowThemeMenu] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleCustomColor = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAccentColor(e.target.value);
+  };
 
   return (
     <div className="w-full md:w-80 bg-brand-surface border-r border-brand-border h-full flex flex-col p-6 overflow-y-auto custom-scrollbar">
@@ -93,24 +116,109 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
       <section className="space-y-8 pb-12">
         {/* THEME PALETTE */}
-        <div>
-          <label className="text-[10px] font-mono uppercase tracking-widest text-brand-text/50 mb-4 block flex items-center gap-2">
-            <LayoutGrid className="w-3 h-3" /> System Theme
-          </label>
-          <div className="flex flex-wrap gap-2">
+        <div className="relative">
+          <div className="flex justify-between items-center mb-4">
+            <label className="text-[10px] font-mono uppercase tracking-widest text-brand-text/50 flex items-center gap-2">
+              <LayoutGrid className="w-3 h-3" /> System Theme
+            </label>
+            <button 
+              onClick={() => setShowThemeMenu(true)}
+              className="text-[9px] font-mono uppercase tracking-tighter text-brand-accent hover:underline"
+            >
+              View More
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-7 gap-1.5">
+            {/* Custom Color Picker Button */}
+            <div className="relative">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95 flex items-center justify-center bg-brand-bg",
+                  "border-brand-border hover:border-brand-accent/50"
+                )}
+                title="Custom Color"
+              >
+                <Plus className="w-4 h-4 text-brand-text/40 group-hover:text-brand-accent" />
+              </button>
+              <input 
+                ref={fileInputRef}
+                type="color" 
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                value={accentColor}
+                onChange={handleCustomColor}
+              />
+            </div>
+
             {THEMES.map((t) => (
               <button
                 key={t.name}
                 onClick={() => setAccentColor(t.color)}
                 className={cn(
-                  "w-8 h-8 rounded-sm border transition-all hover:scale-110 active:scale-95",
-                  accentColor === t.color ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-transparent"
+                  "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95",
+                  accentColor === t.color && !isRainbow ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-transparent"
                 )}
                 style={{ backgroundColor: t.color }}
                 title={t.name}
               />
             ))}
+
+            {/* Rainbow Toggle Button */}
+            <button
+              onClick={() => setIsRainbow(!isRainbow)}
+              className={cn(
+                "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95 flex items-center justify-center bg-[conic-gradient(from_0deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)]",
+                isRainbow ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-brand-border/30"
+              )}
+              title="Rainbow Mode"
+            />
           </div>
+
+          <AnimatePresence>
+            {showThemeMenu && (
+              <>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowThemeMenu(false)}
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 pointer-events-auto"
+                />
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                  className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[320px] bg-brand-surface border border-brand-border p-6 shadow-2xl z-[60] pointer-events-auto"
+                >
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xs font-mono uppercase tracking-[0.2em] text-brand-accent">Theme Library</h3>
+                    <button onClick={() => setShowThemeMenu(false)}>
+                      <X className="w-4 h-4 text-brand-text/40 hover:text-white" />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-5 gap-3">
+                    {[...THEMES, ...EXTRA_THEMES].map((t) => (
+                      <button
+                        key={t.name}
+                        onClick={() => {
+                          setAccentColor(t.color);
+                          setShowThemeMenu(false);
+                        }}
+                        className={cn(
+                          "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95",
+                          accentColor === t.color ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-brand-border/30"
+                        )}
+                        style={{ backgroundColor: t.color }}
+                        title={t.name}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* ENTITIES */}
