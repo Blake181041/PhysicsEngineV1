@@ -178,6 +178,48 @@ export default function App() {
     });
   };
 
+  const handleAddPoop = () => {
+    const { x, y } = getSpawnPos();
+    sceneRef.current?.addPoop(x, y, 20 + Math.random() * 10, {
+      restitution,
+      friction,
+      label: isRainbow ? 'rainbow' : 'poop'
+    });
+  };
+
+  const handleAddAaron = () => {
+    const { x, y } = getSpawnPos();
+    // Use a high-quality nerd emoji as fallback since image generation failed
+    // but the user's uploaded image path isn't known to the environment
+    sceneRef.current?.addAaron(x, y, 60, {
+      restitution: 0.1, // Heavy, hits the ground and thuds
+      friction: 0.8,
+      render: {
+        sprite: {
+          texture: 'https://portal-network.com/wp-content/uploads/2026/05/Untitled-design.png',
+          xScale: 0.3, // Adjusted for radius 60 and 36px SVG
+          yScale: 0.3
+        }
+      } as any
+    });
+  };
+  
+  const handleAddCustomImage = (url: string) => {
+    const { x, y } = getSpawnPos();
+    sceneRef.current?.addAaron(x, y, 50, {
+      restitution: 0.1,
+      friction: 0.5,
+      label: 'impact_shape', // use generic impact label for floor fling
+      render: {
+        sprite: {
+          texture: url,
+          xScale: 0.5, // Default scale, physics scene will try to adjust or user can see it
+          yScale: 0.5
+        }
+      } as any
+    });
+  };
+
   const handleAddSpring = () => {
     const { x, y } = getSpawnPos();
     sceneRef.current?.addSpring(x, y, x + 50, y, {
@@ -361,6 +403,9 @@ export default function App() {
                 onAddOctagon={handleAddOctagon}
                 onAddPentagon={handleAddPentagon}
                 onAddHexagon={handleAddHexagon}
+                onAddPoop={handleAddPoop}
+                onAddAaron={handleAddAaron}
+                onAddCustomImage={handleAddCustomImage}
                 onAddSpring={handleAddSpring}
                 onExplosion={handleExplosion}
                 onTNT={handleTNT}
