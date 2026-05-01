@@ -337,6 +337,59 @@ export default function App() {
     }
   };
 
+  const handleSelectShape = (type: string) => {
+    // We already have add methods, so we can just use those logic
+    // but for context-menu "Change Shape" we'll just keep it simple
+    console.log("Change shape to", type);
+  };
+
+  const handleDeleteBody = () => {
+    if (selectedBody) {
+      sceneRef.current?.removeBody(selectedBody);
+      setSelectedBody(null);
+    }
+  };
+
+  const handleChangeColor = () => {
+    if (selectedBody) {
+      const colors = ['#00ff9d', '#ff0055', '#00d2ff', '#ffcc00', '#9d00ff', '#ffffff'];
+      const nextColor = colors[(colors.indexOf((selectedBody.render as any).fillStyle || '') + 1) % colors.length];
+      (selectedBody.render as any).fillStyle = nextColor;
+      (selectedBody.render as any).strokeStyle = nextColor;
+    }
+  };
+
+  const handleChangeShape = () => {
+    if (selectedBody) {
+      // Cycle through basic shapes
+      const { x, y } = selectedBody.position;
+      const { x: vx, y: vy } = selectedBody.velocity;
+      const angle = selectedBody.angle;
+      const label = selectedBody.label;
+      
+      const shapes = ['circle', 'square', 'triangle', 'pentagon', 'hexagon'];
+      const currentIdx = shapes.indexOf(label) !== -1 ? shapes.indexOf(label) : 0;
+      const nextShape = shapes[(currentIdx + 1) % shapes.length];
+      
+      sceneRef.current?.removeBody(selectedBody);
+      
+      let newBody;
+      switch(nextShape) {
+        case 'circle': newBody = sceneRef.current?.addCircle(x, y, 20); break;
+        case 'square': newBody = sceneRef.current?.addBox(x, y, 40, 40); break;
+        case 'triangle': newBody = sceneRef.current?.addPolygon(x, y, 3, 25); break;
+        case 'pentagon': newBody = sceneRef.current?.addPolygon(x, y, 5, 25); break;
+        case 'hexagon': newBody = sceneRef.current?.addPolygon(x, y, 6, 25); break;
+      }
+      
+      if (newBody) {
+        Matter.Body.setVelocity(newBody, { x: vx, y: vy });
+        Matter.Body.setAngle(newBody, angle);
+        setSelectedBody(newBody);
+      }
+    }
+  };
+
   const handleTNT = () => {
     const { x, y } = getSpawnPos();
     const size = 50;
