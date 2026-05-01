@@ -8,7 +8,6 @@ export interface PhysicsSceneHandle {
   addPolygon: (x: number, y: number, sides: number, radius: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addPoop: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addAaron: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
-  removeBody: (body: Matter.Body) => void;
   addSpring: (x1: number, y1: number, x2: number, y2: number, options?: {
     color?: string;
     bodyA?: Partial<Matter.IBodyDefinition>;
@@ -27,9 +26,10 @@ export interface PhysicsSceneHandle {
 interface PhysicsSceneProps {
   className?: string;
   liquidFx?: boolean;
+  onBodyContext?: (body: Matter.Body, position: { x: number; y: number }) => void;
 }
 
-const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ className, liquidFx }, ref) => {
+const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ className, liquidFx, onBodyContext }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const liquidCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -109,46 +109,6 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       });
       Matter.Composite.add(engineRef.current.world, aaron);
       return aaron;
-    },
-    removeBody: (body) => {
-      Matter.Composite.remove(engineRef.current.world, body);
-    },
-    addSpring: (x1, y1, x2, y2, options: {
-      color?: string;
-      bodyA?: Partial<Matter.IBodyDefinition>;
-      bodyB?: Partial<Matter.IBodyDefinition>;
-      constraint?: Partial<Matter.IConstraintDefinition>;
-    } = {}) => {
-      const group = Matter.Body.nextGroup(true);
-      const accent = getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#00ff9d';
-      
-      const bodyA = Matter.Bodies.circle(x1, y1, 10, { 
-        collisionFilter: { group: group },
-        render: { fillStyle: options.color || accent },
-        ...options.bodyA 
-      } as Matter.IBodyDefinition);
-      
-      const bodyB = Matter.Bodies.circle(x2, y2, 10, { 
-        collisionFilter: { group: group },
-        render: { fillStyle: options.color || accent },
-        ...options.bodyB 
-      } as Matter.IBodyDefinition);
-      
-      const constraint = Matter.Constraint.create({
-        bodyA: bodyA,
-        bodyB: bodyB,
-        stiffness: 0.2,
-        damping: 0.005,
-        render: {
-          visible: true,
-          lineWidth: 3,
-          strokeStyle: options.color || accent
-        },
-        ...options.constraint
-      } as Matter.IConstraintDefinition);
-      
-      Matter.Composite.add(engineRef.current.world, [bodyA, bodyB, constraint]);
-      return { bodyA, bodyB, constraint };
     },
     removeBody: (body) => {
       Matter.Composite.remove(engineRef.current.world, body);
@@ -288,6 +248,35 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
     Matter.Composite.add(engine.world, mouseConstraint);
     render.mouse = mouse;
 
+    // Detection for right-click and double-tap
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      const bodies = Matter.Composite.allBodies(engine.world);
+      const mousePosition = mouse.position;
+      const clickedBodies = Matter.Query.point(bodies, mousePosition);
+      
+      const validBody = clickedBodies.find(b => !b.isStatic);
+      if (validBody && onBodyContext) {
+        onBodyContext(validBody, { x: e.clientX, y: e.clientY });
+      }
+    };
+
+    const handleCanvasClick = (e: MouseEvent) => {
+      // Logic for double-click can be handled via native dblclick or tracking
+    };
+
+    const handleDblClick = (e: MouseEvent) => {
+      const bodies = Matter.Composite.allBodies(engine.world);
+      const clickedBodies = Matter.Query.point(bodies, mouse.position);
+      const validBody = clickedBodies.find(b => !b.isStatic);
+      if (validBody && onBodyContext) {
+        onBodyContext(validBody, { x: e.clientX, y: e.clientY });
+      }
+    };
+
+    canvasRef.current.addEventListener('contextmenu', handleContextMenu);
+    canvasRef.current.addEventListener('dblclick', handleDblClick);
+
     // Special Collision Logic for Aaron's Big Balls
     Matter.Events.on(engine, 'collisionStart', (event: any) => {
       const pairs = event.pairs;
@@ -393,6 +382,10 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (canvasRef.current) {
+        canvasRef.current.removeEventListener('contextmenu', handleContextMenu);
+        canvasRef.current.removeEventListener('dblclick', handleDblClick);
+      }
       Matter.Render.stop(render);
       Matter.Render.stop(liquidRender);
       Matter.Runner.stop(runner);
