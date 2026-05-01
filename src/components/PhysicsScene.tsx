@@ -6,6 +6,8 @@ export interface PhysicsSceneHandle {
   addBox: (x: number, y: number, w: number, h: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addCircle: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addPolygon: (x: number, y: number, sides: number, radius: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
+  addPoop: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
+  addAaron: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addSpring: (x1: number, y1: number, x2: number, y2: number, options?: {
     color?: string;
     bodyA?: Partial<Matter.IBodyDefinition>;
@@ -71,6 +73,41 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       });
       Matter.Composite.add(engineRef.current.world, poly);
       return poly;
+    },
+    addPoop: (x, y, r, options = {}) => {
+      const poop = Matter.Bodies.circle(x, y, r, {
+        ...options,
+        label: 'poop',
+        render: {
+          ...(options as any).render,
+          sprite: {
+            texture: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f4a9.svg',
+            xScale: (r * 2.5) / 36, // Adjust scale based on radius (SVG is usually ~36px)
+            yScale: (r * 2.5) / 36
+          }
+        }
+      });
+      Matter.Composite.add(engineRef.current.world, poop);
+      return poop;
+    },
+    addAaron: (x, y, r, options = {}) => {
+      const aaron = Matter.Bodies.circle(x, y, r, {
+        ...options,
+        label: 'aarons_big_balls',
+        density: 0.1, // Even HEAVIER for more impact
+        restitution: 0.1, 
+        friction: 0.5,
+        render: {
+          ...(options as any).render,
+          sprite: {
+            texture: (options as any).render?.sprite?.texture || 'https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f913.svg',
+            xScale: (options as any).render?.sprite?.xScale || (r * 2.5) / 512,
+            yScale: (options as any).render?.sprite?.yScale || (r * 2.5) / 512
+          }
+        }
+      });
+      Matter.Composite.add(engineRef.current.world, aaron);
+      return aaron;
     },
     addSpring: (x1, y1, x2, y2, options: {
       color?: string;
@@ -246,6 +283,43 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
 
     Matter.Composite.add(engine.world, mouseConstraint);
     render.mouse = mouse;
+
+    // Special Collision Logic for Aaron's Big Balls
+    Matter.Events.on(engine, 'collisionStart', (event: any) => {
+      const pairs = event.pairs;
+      const { height } = containerRef.current!.getBoundingClientRect();
+      
+      pairs.forEach(pair => {
+        const { bodyA, bodyB } = pair;
+        const labels = [bodyA.label, bodyB.label];
+        const isImpactShape = labels.some(l => l === 'aarons_big_balls' || l === 'impact_shape');
+        
+        if (isImpactShape && labels.includes('wall')) {
+          // Find which one is the impact shape
+          const impactBody = labels[0] === 'aarons_big_balls' || labels[0] === 'impact_shape' ? bodyA : bodyB;
+          const wallBody = bodyA.label === 'wall' ? bodyA : bodyB;
+          
+          // Check if it's the ground (wall y-position is at the bottom)
+          if (wallBody.position.y > height) {
+            // FLING!
+            const allBodies = Matter.Composite.allBodies(engine.world);
+            allBodies.forEach(body => {
+              const isFlinger = body.label === 'aarons_big_balls' || body.label === 'impact_shape';
+              if (body.isStatic || isFlinger) return;
+              
+              // Only fling if it's reasonably low (on the ground or near it)
+              if (body.position.y > height - 150) {
+                const force = {
+                  x: (Math.random() - 0.5) * 0.2, // Random horizontal spice
+                  y: -0.5 - (Math.random() * 0.5) // Large upward force
+                };
+                Matter.Body.applyForce(body, body.position, force);
+              }
+            });
+          }
+        }
+      });
+    });
 
     // Velocity clamping to prevent escaping at high speeds
     Matter.Events.on(engine, 'beforeUpdate', () => {
