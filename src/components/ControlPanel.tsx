@@ -10,6 +10,7 @@ interface ControlPanelProps {
   onAddOctagon: () => void;
   onAddPentagon: () => void;
   onAddHexagon: () => void;
+  onAddSpring: () => void;
   onExplosion: () => void;
   onTNT: () => void;
   onTower: () => void;
@@ -38,6 +39,8 @@ interface ControlPanelProps {
   setIsRainbow: (val: boolean) => void;
   isTiltEnabled: boolean;
   setIsTiltEnabled: (val: boolean) => void;
+  tntForce: number;
+  setTntForce: (val: number) => void;
   onRequestTiltPermission: () => void;
 }
 
@@ -70,6 +73,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onAddOctagon,
   onAddPentagon,
   onAddHexagon,
+  onAddSpring,
   onExplosion,
   onTNT,
   onTower,
@@ -98,6 +102,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setIsRainbow,
   isTiltEnabled,
   setIsTiltEnabled,
+  tntForce,
+  setTntForce,
   onRequestTiltPermission
 }) => {
   const [showMore, setShowMore] = React.useState(false);
@@ -274,6 +280,18 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               >
                 <div className="grid grid-cols-2 gap-2">
                   <button
+                    onClick={onAddSpring}
+                    className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
+                  >
+                    <div className="flex flex-col gap-[2px]">
+                      <div className="w-4 h-[2px] bg-brand-text/60 group-hover:bg-brand-accent transition-colors" />
+                      <div className="w-4 h-[2px] bg-brand-text/60 group-hover:bg-brand-accent transition-colors ml-1" />
+                      <div className="w-4 h-[2px] bg-brand-text/60 group-hover:bg-brand-accent transition-colors" />
+                      <div className="w-4 h-[2px] bg-brand-text/60 group-hover:bg-brand-accent transition-colors ml-1" />
+                    </div>
+                    <span className="text-[9px] font-mono uppercase tracking-tighter">Spring</span>
+                  </button>
+                  <button
                     onClick={onAddPentagon}
                     className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
                   >
@@ -374,7 +392,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
                 <div className="flex items-center gap-1">
-                  <MoveRight className="w-3 h-3 text-brand-accent" />
+                  <MoveRight 
+                    className={cn(
+                      "w-3 h-3 text-brand-accent transition-transform duration-500",
+                      gravityX < 0 ? "rotate-180" : "rotate-0",
+                      gravityX === 0 && "opacity-20"
+                    )}
+                  />
                   <span>Gravity X</span>
                 </div>
                 <span className="text-brand-accent">{gravityX.toFixed(1)}</span>
@@ -393,7 +417,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
                 <div className="flex items-center gap-1">
-                  <MoveDown className="w-3 h-3 text-brand-accent" />
+                  <MoveDown 
+                    className={cn(
+                      "w-3 h-3 text-brand-accent transition-transform duration-500",
+                      gravityY < 0 ? "rotate-180" : "rotate-0",
+                      gravityY === 0 && "opacity-20"
+                    )}
+                  />
                   <span>Gravity Y</span>
                 </div>
                 <span className="text-brand-accent">{gravityY.toFixed(1)}</span>
@@ -491,6 +521,25 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 step="0.1"
                 value={timeScale}
                 onChange={(e) => setTimeScale(parseFloat(e.target.value))}
+                className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
+                <div className="flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-brand-accent" />
+                  <span>TNT Explosion Force</span>
+                </div>
+                <span className="text-brand-accent">{tntForce.toFixed(1)}x</span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="10"
+                step="0.5"
+                value={tntForce}
+                onChange={(e) => setTntForce(parseFloat(e.target.value))}
                 className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
               />
             </div>
