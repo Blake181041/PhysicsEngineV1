@@ -6,6 +6,12 @@ export interface PhysicsSceneHandle {
   addBox: (x: number, y: number, w: number, h: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addCircle: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addPolygon: (x: number, y: number, sides: number, radius: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
+  addSpring: (x1: number, y1: number, x2: number, y2: number, options?: {
+    color?: string;
+    bodyA?: Partial<Matter.IBodyDefinition>;
+    bodyB?: Partial<Matter.IBodyDefinition>;
+    constraint?: Partial<Matter.IConstraintDefinition>;
+  }) => { bodyA: Matter.Body, bodyB: Matter.Body, constraint: Matter.Constraint };
   removeBody: (body: Matter.Body) => void;
   applyExplosion: (x: number, y: number, radius: number, force: number) => void;
   clear: () => void;
@@ -65,6 +71,43 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       });
       Matter.Composite.add(engineRef.current.world, poly);
       return poly;
+    },
+    addSpring: (x1, y1, x2, y2, options: {
+      color?: string;
+      bodyA?: Partial<Matter.IBodyDefinition>;
+      bodyB?: Partial<Matter.IBodyDefinition>;
+      constraint?: Partial<Matter.IConstraintDefinition>;
+    } = {}) => {
+      const group = Matter.Body.nextGroup(true);
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#00ff9d';
+      
+      const bodyA = Matter.Bodies.circle(x1, y1, 10, { 
+        collisionFilter: { group: group },
+        render: { fillStyle: options.color || accent },
+        ...options.bodyA 
+      } as Matter.IBodyDefinition);
+      
+      const bodyB = Matter.Bodies.circle(x2, y2, 10, { 
+        collisionFilter: { group: group },
+        render: { fillStyle: options.color || accent },
+        ...options.bodyB 
+      } as Matter.IBodyDefinition);
+      
+      const constraint = Matter.Constraint.create({
+        bodyA: bodyA,
+        bodyB: bodyB,
+        stiffness: 0.2,
+        damping: 0.005,
+        render: {
+          visible: true,
+          lineWidth: 3,
+          strokeStyle: options.color || accent
+        },
+        ...options.constraint
+      } as Matter.IConstraintDefinition);
+      
+      Matter.Composite.add(engineRef.current.world, [bodyA, bodyB, constraint]);
+      return { bodyA, bodyB, constraint };
     },
     removeBody: (body) => {
       Matter.Composite.remove(engineRef.current.world, body);
@@ -126,6 +169,7 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
   const addWalls = () => {
     if (!containerRef.current) return;
     const { width, height } = containerRef.current.getBoundingClientRect();
+    const wallThickness = 600;
     const wallOptions = { isStatic: true, render: { fillStyle: '#1a1a1a' }, label: 'wall' };
     
     // Remove old walls if they exist
@@ -133,10 +177,10 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       Matter.Composite.remove(engineRef.current.world, wallsRef.current);
     }
 
-    const ground = Matter.Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions);
-    const leftWall = Matter.Bodies.rectangle(-25, height / 2, 50, height, wallOptions);
-    const rightWall = Matter.Bodies.rectangle(width + 25, height / 2, 50, height, wallOptions);
-    const ceiling = Matter.Bodies.rectangle(width / 2, -25, width, 50, wallOptions);
+    const ground = Matter.Bodies.rectangle(width / 2, height + wallThickness / 2, width, wallThickness, wallOptions);
+    const leftWall = Matter.Bodies.rectangle(-wallThickness / 2, height / 2, wallThickness, height, wallOptions);
+    const rightWall = Matter.Bodies.rectangle(width + wallThickness / 2, height / 2, wallThickness, height, wallOptions);
+    const ceiling = Matter.Bodies.rectangle(width / 2, -wallThickness / 2, width, wallThickness, wallOptions);
 
     wallsRef.current = [ground, leftWall, rightWall, ceiling];
     Matter.Composite.add(engineRef.current.world, wallsRef.current);
@@ -146,6 +190,11 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
     if (!containerRef.current || !canvasRef.current || !liquidCanvasRef.current) return;
 
     const engine = engineRef.current;
+    
+    // Increase engine precision to prevent tunneling/glitching
+    engine.positionIterations = 10;
+    engine.velocityIterations = 10;
+
     const { width, height } = containerRef.current.getBoundingClientRect();
 
     const render = Matter.Render.create({
@@ -197,6 +246,25 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
 
     Matter.Composite.add(engine.world, mouseConstraint);
     render.mouse = mouse;
+
+    // Velocity clamping to prevent escaping at high speeds
+    Matter.Events.on(engine, 'beforeUpdate', () => {
+      const allBodies = Matter.Composite.allBodies(engine.world);
+      const maxVelocity = 35; // Prevents objects from moving faster than their own width in one step
+      
+      allBodies.forEach(body => {
+        if (body.isStatic) return;
+        
+        const velocitySq = body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y;
+        if (velocitySq > maxVelocity * maxVelocity) {
+          const ratio = maxVelocity / Math.sqrt(velocitySq);
+          Matter.Body.setVelocity(body, {
+            x: body.velocity.x * ratio,
+            y: body.velocity.y * ratio
+          });
+        }
+      });
+    });
 
     // Visibility toggling logic for layered rendering
     Matter.Events.on(render, 'beforeRender', () => {
