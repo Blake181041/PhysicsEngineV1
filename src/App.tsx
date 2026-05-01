@@ -4,8 +4,10 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import Matter from 'matter-js';
 import PhysicsScene, { PhysicsSceneHandle } from './components/PhysicsScene';
 import ControlPanel from './components/ControlPanel';
+import { ShapeMenu } from './components/ShapeMenu';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import { cn } from './lib/utils';
@@ -26,6 +28,9 @@ export default function App() {
   const [tntForce, setTntForce] = useState(2);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedBody, setSelectedBody] = useState<Matter.Body | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     setIsLoaded(true);
@@ -275,6 +280,12 @@ export default function App() {
         });
       }, i * 40);
     }
+  };
+
+  const handleBodyContext = (body: Matter.Body, position: { x: number; y: number }) => {
+    setSelectedBody(body);
+    setMenuPosition(position);
+    setIsMenuOpen(true);
   };
 
   const handleFlood = () => {
@@ -536,6 +547,18 @@ export default function App() {
                 ref={sceneRef} 
                 liquidFx={liquidFx} 
                 className="w-full h-full cursor-crosshair" 
+                onBodyContext={handleBodyContext}
+              />
+
+              <ShapeMenu
+                isOpen={isMenuOpen}
+                onClose={() => setIsMenuOpen(false)}
+                position={menuPosition}
+                shapeLabel={selectedBody?.label || 'Shape'}
+                shapeColor={(selectedBody?.render as any)?.fillStyle || accentColor}
+                onDelete={handleDeleteBody}
+                onChangeColor={handleChangeColor}
+                onChangeShape={handleChangeShape}
               />
             </motion.main>
           </>
