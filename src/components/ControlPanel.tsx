@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Circle, Trash2, MoveDown, MoveRight, Layers, MousePointer2, Zap, Wind, Eye, EyeOff, Activity, LayoutGrid, Plus, X, Compass } from 'lucide-react';
+import { Box, Circle, Trash2, MoveDown, MoveRight, Layers, MousePointer2, Zap, Wind, Eye, EyeOff, Activity, LayoutGrid, Plus, X, Compass, Play, Pause, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 
@@ -115,6 +115,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const [showMore, setShowMore] = React.useState(false);
   const [showCustomShapes, setShowCustomShapes] = React.useState(false);
   const [customImageUrl, setCustomImageUrl] = React.useState('');
+  const [audioUrl, setAudioUrl] = React.useState('');
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
   const [showThemeMenu, setShowThemeMenu] = React.useState(false);
   const [showTiltWarning, setShowTiltWarning] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -396,6 +399,47 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             >
                               SPAWN
                             </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4 pt-2">
+                          <div className="space-y-2">
+                            <span className="text-[8px] font-mono uppercase tracking-widest text-brand-text/40 flex items-center gap-2">
+                              <Volume2 className="w-3 h-3" /> Audio Feed (URL)
+                            </span>
+                            <div className="flex gap-2">
+                              <input 
+                                type="text"
+                                value={audioUrl}
+                                onChange={(e) => {
+                                  setAudioUrl(e.target.value);
+                                  setIsPlaying(false);
+                                }}
+                                placeholder="Paste mp3/audio URL..."
+                                className="flex-1 bg-brand-bg border border-brand-border px-2 py-2 text-[10px] font-mono focus:border-brand-accent outline-none transition-colors"
+                              />
+                              <button 
+                                onClick={() => {
+                                  if (audioRef.current && audioUrl) {
+                                    if (isPlaying) {
+                                      audioRef.current.pause();
+                                    } else {
+                                      audioRef.current.play().catch(err => console.error("Audio playback failed:", err));
+                                    }
+                                    setIsPlaying(!isPlaying);
+                                  }
+                                }}
+                                className="bg-brand-accent/10 border border-brand-accent text-brand-accent px-3 py-2 transition-all hover:bg-brand-accent/20 active:scale-95"
+                              >
+                                {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                              </button>
+                            </div>
+                            <audio 
+                              ref={audioRef} 
+                              src={audioUrl || undefined} 
+                              onEnded={() => setIsPlaying(false)}
+                              className="hidden" 
+                            />
                           </div>
                         </div>
 
