@@ -23,6 +23,7 @@ export default function App() {
   const [accentColor, setAccentColor] = useState('#00ff9d');
   const [isRainbow, setIsRainbow] = useState(false);
   const [isTiltEnabled, setIsTiltEnabled] = useState(false);
+  const [tntForce, setTntForce] = useState(2);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -177,6 +178,27 @@ export default function App() {
     });
   };
 
+  const handleAddSpring = () => {
+    const { x, y } = getSpawnPos();
+    sceneRef.current?.addSpring(x, y, x + 50, y, {
+      color: accentColor,
+      bodyA: { 
+        restitution: 0.95, // High restitution for spring ends
+        friction,
+        label: isRainbow ? 'rainbow' : undefined 
+      },
+      bodyB: { 
+        restitution: 0.95, 
+        friction,
+        label: isRainbow ? 'rainbow' : undefined 
+      },
+      constraint: {
+        stiffness: 0.3, // Even snappier
+        damping: 0.002 // Extremely low damping for long-lasting oscillation
+      }
+    });
+  };
+
   const handleTower = () => {
     const width = window.innerWidth;
     const sidebarWidth = width < 768 ? 0 : 320;
@@ -248,12 +270,12 @@ export default function App() {
     createExplosionEffect(centerX, centerY);
   };
 
-  const createExplosionEffect = (x: number, y: number) => {
+  const createExplosionEffect = (x: number, y: number, forceMultiplier: number = tntForce) => {
     const count = 40;
     const radius = 8;
     
     // Apply physical force
-    sceneRef.current?.applyExplosion(x, y, 400, 2);
+    sceneRef.current?.applyExplosion(x, y, 400 * (forceMultiplier / 2), forceMultiplier);
 
     // Visual particles
     for (let i = 0; i < count; i++) {
@@ -339,6 +361,7 @@ export default function App() {
                 onAddOctagon={handleAddOctagon}
                 onAddPentagon={handleAddPentagon}
                 onAddHexagon={handleAddHexagon}
+                onAddSpring={handleAddSpring}
                 onExplosion={handleExplosion}
                 onTNT={handleTNT}
                 onTower={handleTower}
@@ -370,6 +393,8 @@ export default function App() {
                 setIsRainbow={setIsRainbow}
                 isTiltEnabled={isTiltEnabled}
                 setIsTiltEnabled={setIsTiltEnabled}
+                tntForce={tntForce}
+                setTntForce={setTntForce}
                 onRequestTiltPermission={requestTiltPermission}
               />
             </motion.div>
