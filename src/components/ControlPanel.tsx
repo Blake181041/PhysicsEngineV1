@@ -10,6 +10,9 @@ interface ControlPanelProps {
   onAddOctagon: () => void;
   onAddPentagon: () => void;
   onAddHexagon: () => void;
+  onAddPoop: () => void;
+  onAddAaron: () => void;
+  onAddCustomImage: (url: string) => void;
   onAddSpring: () => void;
   onExplosion: () => void;
   onTNT: () => void;
@@ -73,6 +76,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onAddOctagon,
   onAddPentagon,
   onAddHexagon,
+  onAddPoop,
+  onAddAaron,
+  onAddCustomImage,
   onAddSpring,
   onExplosion,
   onTNT,
@@ -107,6 +113,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onRequestTiltPermission
 }) => {
   const [showMore, setShowMore] = React.useState(false);
+  const [showCustomShapes, setShowCustomShapes] = React.useState(false);
+  const [customImageUrl, setCustomImageUrl] = React.useState('');
   const [showThemeMenu, setShowThemeMenu] = React.useState(false);
   const [showTiltWarning, setShowTiltWarning] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -276,9 +284,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden space-y-2 mb-2"
+                className="relative overflow-hidden space-y-2 mb-2"
               >
                 <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={onAddPoop}
+                    className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
+                  >
+                    <span className="text-xl group-hover:scale-125 transition-transform">💩</span>
+                    <span className="text-[9px] font-mono uppercase tracking-tighter">Poop</span>
+                  </button>
                   <button
                     onClick={onAddSpring}
                     className="group flex flex-col items-center justify-center gap-2 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95"
@@ -333,7 +348,77 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     <Wind className="w-4 h-4 text-brand-text/60 group-hover:text-brand-accent transition-colors" />
                     <span className="text-[9px] font-mono uppercase tracking-tighter">Rain</span>
                   </button>
+                  <button
+                    onClick={() => setShowCustomShapes(true)}
+                    className="group flex flex-col items-center justify-center gap-1 py-3 bg-brand-bg border border-brand-border hover:border-brand-accent/50 transition-all active:scale-95 col-span-2"
+                  >
+                    <Plus className="w-4 h-4 text-brand-accent" />
+                    <span className="text-[9px] font-mono uppercase tracking-[0.1em] text-brand-accent font-bold">Custom Shapes</span>
+                  </button>
                 </div>
+
+                <AnimatePresence>
+                  {showCustomShapes && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="absolute inset-0 bg-brand-surface z-10 flex flex-col"
+                    >
+                      <div className="flex items-center justify-between mb-4 border-b border-brand-border pb-2">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-brand-accent">Custom Gallery</span>
+                        <button 
+                          onClick={() => setShowCustomShapes(false)}
+                          className="p-1 hover:bg-white/5 rounded"
+                        >
+                          <X className="w-3 h-3 text-brand-text/40" />
+                        </button>
+                      </div>
+                      <div className="space-y-4 overflow-y-auto custom-scrollbar pr-1">
+                        <div className="space-y-2">
+                          <span className="text-[8px] font-mono uppercase tracking-widest text-brand-text/40">Remote Construct (URL)</span>
+                          <div className="flex gap-2">
+                            <input 
+                              type="text"
+                              value={customImageUrl}
+                              onChange={(e) => setCustomImageUrl(e.target.value)}
+                              placeholder="Paste image URL..."
+                              className="flex-1 bg-brand-bg border border-brand-border px-2 py-2 text-[10px] font-mono focus:border-brand-accent outline-none transition-colors"
+                            />
+                            <button 
+                              onClick={() => {
+                                if (customImageUrl) {
+                                  onAddCustomImage(customImageUrl);
+                                  setCustomImageUrl('');
+                                }
+                              }}
+                              className="bg-brand-accent text-black px-3 py-2 text-[10px] font-mono font-bold hover:scale-105 active:scale-95 transition-all"
+                            >
+                              SPAWN
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="h-px bg-brand-border/40 my-2" />
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={onAddAaron}
+                            className="group flex flex-col items-center justify-center gap-2 py-4 bg-brand-bg border border-brand-accent/30 hover:border-brand-accent transition-all active:scale-95 shadow-[0_0_10px_rgba(0,255,157,0.05)]"
+                          >
+                            <div className="w-10 h-10 flex items-center justify-center bg-brand-accent/5 rounded-full overflow-hidden border border-brand-accent/20 group-hover:scale-110 transition-transform">
+                              <span className="text-2xl"></span>
+                            </div>
+                            <div className="text-center">
+                              <span className="text-[8px] font-mono uppercase tracking-widest text-brand-accent font-bold block">AARONS</span>
+                              <span className="text-[8px] font-mono uppercase tracking-widest text-brand-accent block">BIG BALLS</span>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
           </AnimatePresence>
