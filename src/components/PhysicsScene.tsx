@@ -8,6 +8,7 @@ export interface PhysicsSceneHandle {
   addPolygon: (x: number, y: number, sides: number, radius: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addPoop: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addAaron: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
+  removeBody: (body: Matter.Body) => void;
   addSpring: (x1: number, y1: number, x2: number, y2: number, options?: {
     color?: string;
     bodyA?: Partial<Matter.IBodyDefinition>;
@@ -108,6 +109,9 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       });
       Matter.Composite.add(engineRef.current.world, aaron);
       return aaron;
+    },
+    removeBody: (body) => {
+      Matter.Composite.remove(engineRef.current.world, body);
     },
     addSpring: (x1, y1, x2, y2, options: {
       color?: string;
