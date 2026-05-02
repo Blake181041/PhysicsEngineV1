@@ -8,6 +8,8 @@ import Matter from 'matter-js';
 import PhysicsScene, { PhysicsSceneHandle } from './components/PhysicsScene';
 import ControlPanel from './components/ControlPanel';
 import { ShapeMenu } from './components/ShapeMenu';
+import { ShapeColorLibrary } from './components/ShapeColorLibrary';
+import { ShapeLibrary } from './components/ShapeLibrary';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import { cn } from './lib/utils';
@@ -30,6 +32,9 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedBody, setSelectedBody] = useState<Matter.Body | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isColorLibraryOpen, setIsColorLibraryOpen] = useState(false);
+  const [isShapeLibraryOpen, setIsShapeLibraryOpen] = useState(false);
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -361,41 +366,43 @@ export default function App() {
     }
   };
 
-  const handleChangeColor = () => {
+  const handleSelectShapeColor = (color: string) => {
     if (selectedBody) {
-      const colors = ['#00ff9d', '#ff0055', '#00d2ff', '#ffcc00', '#9d00ff', '#ffffff'];
-      const nextColor = colors[(colors.indexOf((selectedBody.render as any).fillStyle || '') + 1) % colors.length];
-      (selectedBody.render as any).fillStyle = nextColor;
-      (selectedBody.render as any).strokeStyle = nextColor;
+      (selectedBody.render as any).fillStyle = color;
+      (selectedBody.render as any).strokeStyle = color;
     }
   };
 
-  const handleChangeShape = () => {
+  const handleSelectShapeType = (type: string) => {
     if (selectedBody) {
-      // Cycle through basic shapes
       const { x, y } = selectedBody.position;
       const { x: vx, y: vy } = selectedBody.velocity;
       const angle = selectedBody.angle;
-      const label = selectedBody.label;
-      
-      const shapes = ['circle', 'square', 'triangle', 'pentagon', 'hexagon'];
-      const currentIdx = shapes.indexOf(label) !== -1 ? shapes.indexOf(label) : 0;
-      const nextShape = shapes[(currentIdx + 1) % shapes.length];
+      const color = (selectedBody.render as any).fillStyle || accentColor;
       
       sceneRef.current?.removeBody(selectedBody);
       
       let newBody;
-      switch(nextShape) {
+      switch(type) {
         case 'circle': newBody = sceneRef.current?.addCircle(x, y, 20); break;
         case 'square': newBody = sceneRef.current?.addBox(x, y, 40, 40); break;
         case 'triangle': newBody = sceneRef.current?.addPolygon(x, y, 3, 25); break;
         case 'pentagon': newBody = sceneRef.current?.addPolygon(x, y, 5, 25); break;
         case 'hexagon': newBody = sceneRef.current?.addPolygon(x, y, 6, 25); break;
+        case 'octagon': newBody = sceneRef.current?.addPolygon(x, y, 8, 25); break;
+        case 'spring': 
+          const springParts = sceneRef.current?.addSpring(x - 25, y, x + 25, y, { color: color });
+          if (springParts) {
+            newBody = springParts.bodyA; // we'll just track one end for selection
+          }
+          break;
       }
       
       if (newBody) {
         Matter.Body.setVelocity(newBody, { x: vx, y: vy });
         Matter.Body.setAngle(newBody, angle);
+        (newBody.render as any).fillStyle = color;
+        (newBody.render as any).strokeStyle = color;
         setSelectedBody(newBody);
       }
     }
@@ -505,6 +512,8 @@ export default function App() {
                 tntForce={tntForce}
                 setTntForce={setTntForce}
                 onRequestTiltPermission={requestTiltPermission}
+                showThemeMenu={showThemeMenu}
+                setShowThemeMenu={setShowThemeMenu}
               />
             </motion.div>
 
@@ -557,8 +566,22 @@ export default function App() {
                 shapeLabel={selectedBody?.label || 'Shape'}
                 shapeColor={(selectedBody?.render as any)?.fillStyle || accentColor}
                 onDelete={handleDeleteBody}
-                onChangeColor={handleChangeColor}
-                onChangeShape={handleChangeShape}
+                onOpenColorLibrary={() => setIsColorLibraryOpen(true)}
+                onOpenShapeLibrary={() => setIsShapeLibraryOpen(true)}
+              />
+
+              <ShapeColorLibrary
+                isOpen={isColorLibraryOpen}
+                onClose={() => setIsColorLibraryOpen(false)}
+                onSelectColor={handleSelectShapeColor}
+                currentColor={(selectedBody?.render as any)?.fillStyle || accentColor}
+              />
+
+              <ShapeLibrary
+                isOpen={isShapeLibraryOpen}
+                onClose={() => setIsShapeLibraryOpen(false)}
+                onSelectShape={handleSelectShapeType}
+                currentColor={(selectedBody?.render as any)?.fillStyle || accentColor}
               />
             </motion.main>
           </>
