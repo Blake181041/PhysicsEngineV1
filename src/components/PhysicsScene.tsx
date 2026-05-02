@@ -8,6 +8,7 @@ export interface PhysicsSceneHandle {
   addPolygon: (x: number, y: number, sides: number, radius: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addPoop: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addAaron: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
+  addLogansJuicyBalls: (x: number, y: number, r: number, options?: Partial<Matter.IBodyDefinition>) => Matter.Body;
   addSpring: (x1: number, y1: number, x2: number, y2: number, options?: {
     color?: string;
     bodyA?: Partial<Matter.IBodyDefinition>;
@@ -113,6 +114,24 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       });
       Matter.Composite.add(engineRef.current.world, aaron);
       return aaron;
+    },
+    addLogansJuicyBalls: (x, y, r, options = {}) => {
+      const ball = Matter.Bodies.circle(x, y, r, {
+        ...options,
+        label: 'logans_juicy_balls',
+        restitution: 0.5, 
+        friction: 0.1,
+        render: {
+          ...(options as any).render,
+          sprite: {
+            texture: (options as any).render?.sprite?.texture || 'https://i.ibb.co/VpDpjgK/logans-balls.png', // Placeholder
+            xScale: (options as any).render?.sprite?.xScale || (r * 2.5) / 512,
+            yScale: (options as any).render?.sprite?.yScale || (r * 2.5) / 512
+          }
+        }
+      });
+      Matter.Composite.add(engineRef.current.world, ball);
+      return ball;
     },
     addSpring: (x1, y1, x2, y2, options: {
       color?: string;
