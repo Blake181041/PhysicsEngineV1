@@ -22,6 +22,8 @@ export interface PhysicsSceneHandle {
   setRenderOptions: (options: Partial<Matter.IRendererOptions>) => void;
   updateRainbowBodies: (color: string) => void;
   getMousePos: () => { x: number; y: number };
+  getState: () => any[];
+  restoreState: (state: any[]) => void;
 }
 
 interface PhysicsSceneProps {
@@ -207,6 +209,63 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
         return { x: mouseRef.current.position.x, y: mouseRef.current.position.y };
       }
       return { x: 0, y: 0 };
+    },
+    getState: () => {
+      if (!engineRef.current) return [];
+      const bodies = Matter.Composite.allBodies(engineRef.current.world).filter(b => !b.isStatic);
+      return bodies.map(body => ({
+        label: body.label,
+        position: { x: body.position.x, y: body.position.y },
+        velocity: { x: body.velocity.x, y: body.velocity.y },
+        angle: body.angle,
+        angularVelocity: body.angularVelocity,
+        render: { ...body.render },
+        restitution: body.restitution,
+        friction: body.friction,
+        density: body.density,
+        // Store shape info for reconstruction
+        type: body.circleRadius ? 'circle' : (body.vertices.length === 4 ? 'box' : 'polygon'),
+        radius: body.circleRadius,
+        sides: body.vertices.length,
+        width: body.bounds.max.x - body.bounds.min.x,
+        height: body.bounds.max.y - body.bounds.min.y,
+        vertices: body.vertices.map(v => ({ x: v.x - body.position.x, y: v.y - body.position.y }))
+      }));
+    },
+    restoreState: (state: any[]) => {
+      if (!engineRef.current) return;
+      
+      // Clear current non-static bodies
+      const bodies = Matter.Composite.allBodies(engineRef.current.world).filter(b => !b.isStatic);
+      Matter.Composite.remove(engineRef.current.world, bodies);
+      
+      // Recreate bodies from state
+      state.forEach(data => {
+        let body;
+        const options = {
+          label: data.label,
+          restitution: data.restitution,
+          friction: data.friction,
+          density: data.density,
+          render: data.render,
+          velocity: data.velocity,
+          angle: data.angle,
+          angularVelocity: data.angularVelocity
+        };
+
+        if (data.type === 'circle') {
+          body = Matter.Bodies.circle(data.position.x, data.position.y, data.radius, options);
+        } else if (data.type === 'box') {
+          body = Matter.Bodies.rectangle(data.position.x, data.position.y, data.width, data.height, options);
+        } else {
+          // Polygon or custom
+          body = Matter.Bodies.fromVertices(data.position.x, data.position.y, [data.vertices], options);
+        }
+
+        if (body) {
+          Matter.Composite.add(engineRef.current!.world, body);
+        }
+      });
     }
   }));
 
