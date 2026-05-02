@@ -111,6 +111,56 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 's') {
+        const mousePos = sceneRef.current?.getMousePos();
+        if (mousePos) {
+          if (e.altKey) {
+            // Random color
+            const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+            spawnRandomShape(mousePos.x, mousePos.y, randomColor);
+          } else {
+            spawnRandomShape(mousePos.x, mousePos.y);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [restitution, friction, accentColor, isRainbow]);
+
+  const spawnRandomShape = (x: number, y: number, overrideColor?: string) => {
+    const shapeType = Math.floor(Math.random() * 5);
+    const commonOptions = {
+      restitution,
+      friction,
+      label: isRainbow ? 'rainbow' : undefined,
+      render: { fillStyle: overrideColor || accentColor, strokeStyle: '#000', lineWidth: 1 }
+    };
+
+    switch (shapeType) {
+      case 0:
+        const size = 30 + Math.random() * 40;
+        sceneRef.current?.addBox(x, y, size, size, commonOptions);
+        break;
+      case 1:
+        const r = 20 + Math.random() * 20;
+        sceneRef.current?.addCircle(x, y, r, commonOptions);
+        break;
+      case 2:
+        sceneRef.current?.addPolygon(x, y, 3, 30, commonOptions);
+        break;
+      case 3:
+        sceneRef.current?.addPolygon(x, y, 5, 30, commonOptions);
+        break;
+      case 4:
+        sceneRef.current?.addPolygon(x, y, 6, 30, commonOptions);
+        break;
+    }
+  };
+
   const getSpawnPos = () => {
     // dynamically check width for better spawning on mobile vs desktop
     const width = window.innerWidth;
