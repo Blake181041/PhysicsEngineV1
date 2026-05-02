@@ -314,6 +314,30 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
     canvasRef.current.addEventListener('contextmenu', handleContextMenu);
     canvasRef.current.addEventListener('dblclick', handleDblClick);
 
+    // Manual double-tap detection for mobile
+    let lastTap = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      const now = Date.now();
+      const DOUBLE_TAP_DELAY = 300;
+      
+      if (now - lastTap < DOUBLE_TAP_DELAY) {
+        // Prevent default zoom or other behavior on double-tap
+        if (e.cancelable) e.preventDefault();
+        
+        const bodies = Matter.Composite.allBodies(engine.world);
+        const clickedBodies = Matter.Query.point(bodies, mouse.position);
+        const validBody = clickedBodies.find(b => !b.isStatic);
+        
+        if (validBody && onBodyContext) {
+          const touch = e.touches[0] || e.changedTouches[0];
+          onBodyContext(validBody, { x: touch.clientX, y: touch.clientY });
+        }
+      }
+      lastTap = now;
+    };
+
+    canvasRef.current.addEventListener('touchstart', handleTouchStart, { passive: false });
+
     // Special Collision Logic for Aaron's Big Balls
     Matter.Events.on(engine, 'collisionStart', (event: any) => {
       const pairs = event.pairs;
@@ -422,6 +446,7 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       if (canvasRef.current) {
         canvasRef.current.removeEventListener('contextmenu', handleContextMenu);
         canvasRef.current.removeEventListener('dblclick', handleDblClick);
+        canvasRef.current.removeEventListener('touchstart', handleTouchStart);
       }
       Matter.Render.stop(render);
       Matter.Render.stop(liquidRender);
