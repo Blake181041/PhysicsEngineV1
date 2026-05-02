@@ -10,8 +10,8 @@ interface ShapeMenuProps {
   shapeLabel: string;
   shapeColor: string;
   onDelete: () => void;
-  onChangeColor: () => void;
-  onChangeShape: () => void;
+  onOpenColorLibrary: () => void;
+  onOpenShapeLibrary: () => void;
 }
 
 export const ShapeMenu: React.FC<ShapeMenuProps> = ({
@@ -21,8 +21,8 @@ export const ShapeMenu: React.FC<ShapeMenuProps> = ({
   shapeLabel,
   shapeColor,
   onDelete,
-  onChangeColor,
-  onChangeShape,
+  onOpenColorLibrary,
+  onOpenShapeLibrary,
 }) => {
   // Prevent menu from going off-screen
   const menuWidth = 240;
@@ -37,7 +37,7 @@ export const ShapeMenu: React.FC<ShapeMenuProps> = ({
       case 'triangle':
         return (
           <div 
-            className="w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-bottom-[28px]" 
+            className="w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-b-[28px]" 
             style={{ borderBottomColor: shapeColor }} 
           />
         );
@@ -79,7 +79,7 @@ export const ShapeMenu: React.FC<ShapeMenuProps> = ({
             {/* Actions */}
             <div className="flex flex-col">
               <button
-                onClick={() => { onChangeShape(); onClose(); }}
+                onClick={() => { onOpenShapeLibrary(); onClose(); }}
                 className="group flex items-center gap-6 p-6 border-b border-[#222] hover:bg-white/5 transition-colors text-left"
               >
                 <Shapes className="w-10 h-10 text-white/40" style={{ color: shapeColor ? `${shapeColor}66` : undefined }} />
@@ -90,7 +90,7 @@ export const ShapeMenu: React.FC<ShapeMenuProps> = ({
               </button>
 
               <button
-                onClick={() => { onChangeColor(); onClose(); }}
+                onClick={() => { onOpenColorLibrary(); onClose(); }}
                 className="group flex items-center gap-6 p-6 border-b border-[#222] hover:bg-white/5 transition-colors text-left"
               >
                 <Palette className="w-10 h-10 text-white/40" style={{ color: shapeColor ? `${shapeColor}66` : undefined }} />
