@@ -404,6 +404,23 @@ export default function App() {
       } as any
     });
   };
+
+  const handleAddLogansJuicyBalls = () => {
+    saveToHistory();
+    const { x, y } = getSpawnPos();
+    // LOGANS JUICY BALLS - User can replace the texture URL below
+    sceneRef.current?.addLogansJuicyBalls(x, y, 50, {
+      restitution,
+      friction,
+      render: {
+        sprite: {
+          texture: 'https://portal-network.com/wp-content/uploads/2026/05/Untitled-design-1.png', // <-- REPLACE THIS URL
+          xScale: 0.2,
+          yScale: 0.2
+        }
+      } as any
+    });
+  };
   
   const handleAddCustomImage = (url: string) => {
     saveToHistory();
@@ -676,6 +693,7 @@ export default function App() {
                 onAddHexagon={handleAddHexagon}
                 onAddPoop={handleAddPoop}
                 onAddAaron={handleAddAaron}
+                onAddLogansJuicyBalls={handleAddLogansJuicyBalls}
                 onAddCustomImage={handleAddCustomImage}
                 onAddSpring={handleAddSpring}
                 onExplosion={handleExplosion}
