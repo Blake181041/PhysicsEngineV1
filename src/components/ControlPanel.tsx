@@ -12,6 +12,7 @@ interface ControlPanelProps {
   onAddHexagon: () => void;
   onAddPoop: () => void;
   onAddAaron: () => void;
+  onAddLogansJuicyBalls: () => void;
   onAddCustomImage: (url: string) => void;
   onAddSpring: () => void;
   onExplosion: () => void;
@@ -45,6 +46,8 @@ interface ControlPanelProps {
   tntForce: number;
   setTntForce: (val: number) => void;
   onRequestTiltPermission: () => void;
+  showThemeMenu: boolean;
+  setShowThemeMenu: (val: boolean) => void;
 }
 
 const THEMES = [
@@ -78,6 +81,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onAddHexagon,
   onAddPoop,
   onAddAaron,
+  onAddLogansJuicyBalls,
   onAddCustomImage,
   onAddSpring,
   onExplosion,
@@ -110,7 +114,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setIsTiltEnabled,
   tntForce,
   setTntForce,
-  onRequestTiltPermission
+  onRequestTiltPermission,
+  showThemeMenu,
+  setShowThemeMenu
 }) => {
   const [showMore, setShowMore] = React.useState(false);
   const [showCustomShapes, setShowCustomShapes] = React.useState(false);
@@ -118,7 +124,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const [audioUrl, setAudioUrl] = React.useState('');
   const [isPlaying, setIsPlaying] = React.useState(false);
   const audioRef = React.useRef<HTMLAudioElement>(null);
-  const [showThemeMenu, setShowThemeMenu] = React.useState(false);
   const [showTiltWarning, setShowTiltWarning] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -451,11 +456,31 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                             className="group flex flex-col items-center justify-center gap-2 py-4 bg-brand-bg border border-brand-accent/30 hover:border-brand-accent transition-all active:scale-95 shadow-[0_0_10px_rgba(0,255,157,0.05)]"
                           >
                             <div className="w-10 h-10 flex items-center justify-center bg-brand-accent/5 rounded-full overflow-hidden border border-brand-accent/20 group-hover:scale-110 transition-transform">
-                              <span className="text-2xl"></span>
+                              <img 
+                                src="https://portal-network.com/wp-content/uploads/2026/05/Untitled-design.png" 
+                                alt="Aaron Icon" 
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                             <div className="text-center">
                               <span className="text-[8px] font-mono uppercase tracking-widest text-brand-accent font-bold block">AARONS</span>
                               <span className="text-[8px] font-mono uppercase tracking-widest text-brand-accent block">BIG BALLS</span>
+                            </div>
+                          </button>
+                          <button
+                            onClick={onAddLogansJuicyBalls}
+                            className="group flex flex-col items-center justify-center gap-2 py-4 bg-brand-bg border border-brand-accent/30 hover:border-brand-accent transition-all active:scale-95 shadow-[0_0_10px_rgba(0,255,157,0.05)]"
+                          >
+                            <div className="w-10 h-10 flex items-center justify-center bg-brand-accent/5 rounded-full overflow-hidden border border-brand-accent/20 group-hover:scale-110 transition-transform">
+                              <img 
+                                src="https://portal-network.com/wp-content/uploads/2026/05/Untitled-design-1.png" 
+                                alt="Logan Icon" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="text-center">
+                              <span className="text-[8px] font-mono uppercase tracking-widest text-brand-accent font-bold block">LOGANS</span>
+                              <span className="text-[8px] font-mono uppercase tracking-widest text-brand-accent block">JUICY BALLS</span>
                             </div>
                           </button>
                         </div>
