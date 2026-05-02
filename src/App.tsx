@@ -113,23 +113,55 @@ export default function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 's') {
-        const mousePos = sceneRef.current?.getMousePos();
-        if (mousePos) {
-          if (e.altKey) {
-            // Random color
-            const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
-            spawnRandomShape(mousePos.x, mousePos.y, randomColor);
-          } else {
-            spawnRandomShape(mousePos.x, mousePos.y);
-          }
+      const key = e.key.toLowerCase();
+      const mousePos = sceneRef.current?.getMousePos();
+      const x = mousePos?.x || 0;
+      const y = mousePos?.y || 0;
+
+      const commonOptions = {
+        restitution,
+        friction,
+        label: isRainbow ? 'rainbow' : undefined,
+        render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+      };
+
+      if (key === 's') {
+        if (e.altKey) {
+          // Random color
+          const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+          spawnRandomShape(x, y, randomColor);
+        } else {
+          spawnRandomShape(x, y);
         }
+        return;
+      }
+
+      switch (e.key) {
+        case '1': sceneRef.current?.addBox(x, y, 40, 40, commonOptions); break;
+        case '2': sceneRef.current?.addCircle(x, y, 25, commonOptions); break;
+        case '3': sceneRef.current?.addPolygon(x, y, 3, 25, commonOptions); break;
+        case '4': sceneRef.current?.addPolygon(x, y, 8, 25, commonOptions); break;
+        case '5': sceneRef.current?.addPoop(x, y, 20, { ...commonOptions, label: isRainbow ? 'rainbow' : 'poop' }); break;
+        case '6': 
+          sceneRef.current?.addSpring(x - 25, y, x + 25, y, {
+            color: accentColor,
+            bodyA: commonOptions,
+            bodyB: commonOptions,
+            constraint: { stiffness: 0.3, damping: 0.002 }
+          });
+          break;
+        case '7': sceneRef.current?.addPolygon(x, y, 5, 25, commonOptions); break;
+        case '8': sceneRef.current?.addPolygon(x, y, 6, 25, commonOptions); break;
+        case '9': handleTNT(x, y); break;
+        case '0': handleFlood(); break;
+        case '-': handleTower(); break;
+        case '=': handleRain(); break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [restitution, friction, accentColor, isRainbow]);
+  }, [restitution, friction, accentColor, isRainbow, tntForce]);
 
   const spawnRandomShape = (x: number, y: number, overrideColor?: string) => {
     const shapeType = Math.floor(Math.random() * 5);
@@ -458,8 +490,8 @@ export default function App() {
     }
   };
 
-  const handleTNT = () => {
-    const { x, y } = getSpawnPos();
+  const handleTNT = (overrideX?: number, overrideY?: number) => {
+    const { x, y } = (overrideX !== undefined && overrideY !== undefined) ? { x: overrideX, y: overrideY } : getSpawnPos();
     const size = 50;
     
     const tnt = sceneRef.current?.addBox(x, y, size, size, {
