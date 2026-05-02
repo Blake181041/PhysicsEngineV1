@@ -36,6 +36,40 @@ export default function App() {
   const [isShapeLibraryOpen, setIsShapeLibraryOpen] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  
+  // History management
+  const historyRef = useRef<any[][]>([]);
+  const redoStackRef = useRef<any[][]>([]);
+
+  const saveToHistory = () => {
+    if (sceneRef.current) {
+      const currentState = sceneRef.current.getState();
+      historyRef.current.push(currentState);
+      // Limit history size to 50 steps
+      if (historyRef.current.length > 50) historyRef.current.shift();
+      redoStackRef.current = []; // Clear redo stack on new action
+    }
+  };
+
+  const handleUndo = () => {
+    if (historyRef.current.length > 0 && sceneRef.current) {
+      const currentState = sceneRef.current.getState();
+      redoStackRef.current.push(currentState);
+      
+      const previousState = historyRef.current.pop()!;
+      sceneRef.current.restoreState(previousState);
+    }
+  };
+
+  const handleRedo = () => {
+    if (redoStackRef.current.length > 0 && sceneRef.current) {
+      const currentState = sceneRef.current.getState();
+      historyRef.current.push(currentState);
+      
+      const nextState = redoStackRef.current.pop()!;
+      sceneRef.current.restoreState(nextState);
+    }
+  };
 
   useEffect(() => {
     setIsLoaded(true);
@@ -125,7 +159,29 @@ export default function App() {
         render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
       };
 
+      if (key === 'backspace' && e.altKey) {
+        saveToHistory();
+        resetAll();
+        return;
+      }
+
+      if (key === ',' && e.altKey) {
+        handleUndo();
+        return;
+      }
+
+      if (key === '.' && e.altKey) {
+        handleRedo();
+        return;
+      }
+
+      if (key === 'r' && e.altKey) {
+        randomizeSettings();
+        return;
+      }
+
       if (key === 's') {
+        saveToHistory();
         if (e.altKey) {
           // Random color
           const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
@@ -137,12 +193,13 @@ export default function App() {
       }
 
       switch (e.key) {
-        case '1': sceneRef.current?.addBox(x, y, 40, 40, commonOptions); break;
-        case '2': sceneRef.current?.addCircle(x, y, 25, commonOptions); break;
-        case '3': sceneRef.current?.addPolygon(x, y, 3, 25, commonOptions); break;
-        case '4': sceneRef.current?.addPolygon(x, y, 8, 25, commonOptions); break;
-        case '5': sceneRef.current?.addPoop(x, y, 20, { ...commonOptions, label: isRainbow ? 'rainbow' : 'poop' }); break;
+        case '1': saveToHistory(); sceneRef.current?.addBox(x, y, 40, 40, commonOptions); break;
+        case '2': saveToHistory(); sceneRef.current?.addCircle(x, y, 25, commonOptions); break;
+        case '3': saveToHistory(); sceneRef.current?.addPolygon(x, y, 3, 25, commonOptions); break;
+        case '4': saveToHistory(); sceneRef.current?.addPolygon(x, y, 8, 25, commonOptions); break;
+        case '5': saveToHistory(); sceneRef.current?.addPoop(x, y, 20, { ...commonOptions, label: isRainbow ? 'rainbow' : 'poop' }); break;
         case '6': 
+          saveToHistory();
           sceneRef.current?.addSpring(x - 25, y, x + 25, y, {
             color: accentColor,
             bodyA: commonOptions,
@@ -150,18 +207,62 @@ export default function App() {
             constraint: { stiffness: 0.3, damping: 0.002 }
           });
           break;
-        case '7': sceneRef.current?.addPolygon(x, y, 5, 25, commonOptions); break;
-        case '8': sceneRef.current?.addPolygon(x, y, 6, 25, commonOptions); break;
-        case '9': handleTNT(x, y); break;
-        case '0': handleFlood(); break;
-        case '-': handleTower(); break;
-        case '=': handleRain(); break;
+        case '7': saveToHistory(); sceneRef.current?.addPolygon(x, y, 5, 25, commonOptions); break;
+        case '8': saveToHistory(); sceneRef.current?.addPolygon(x, y, 6, 25, commonOptions); break;
+        case '9': saveToHistory(); handleTNT(x, y); break;
+        case '0': saveToHistory(); handleFlood(); break;
+        case '-': saveToHistory(); handleTower(); break;
+        case '=': saveToHistory(); handleRain(); break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [restitution, friction, accentColor, isRainbow, tntForce]);
+
+  const resetAll = () => {
+    setGravityX(0);
+    setGravityY(1);
+    setTimeScale(1);
+    setRestitution(0.5);
+    setFriction(0.1);
+    setWireframes(false);
+    setShowVelocity(false);
+    setLiquidFx(false);
+    setAccentColor('#00ff9d');
+    setIsRainbow(false);
+    setIsTiltEnabled(false);
+    setTntForce(2);
+    
+    sceneRef.current?.setGravity(0, 1);
+    sceneRef.current?.setTimeScale(1);
+    sceneRef.current?.clear();
+  };
+
+  const randomizeSettings = () => {
+    const nextRainbow = Math.random() > 0.7;
+    setRestitution(Math.random() * 1.5); // 0 to 1.5
+    setFriction(Math.random()); // 0 to 1
+    const nextGX = (Math.random() - 0.5) * 4;
+    const nextGY = (Math.random() - 0.5) * 4;
+    setGravityX(nextGX); // -2 to 2
+    setGravityY(nextGY); // -2 to 2
+    setTimeScale(0.1 + Math.random() * 1.9); // 0.1 to 2.0
+    setTntForce(1 + Math.random() * 9); // 1 to 10
+    setLiquidFx(Math.random() > 0.5);
+    setIsRainbow(nextRainbow); // 30% chance of rainbow
+    setWireframes(Math.random() > 0.8);
+    setShowVelocity(Math.random() > 0.8);
+    
+    if (!nextRainbow) {
+      const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+      setAccentColor(randomColor);
+    }
+
+    // Immediately apply gravity and timescale updates to the scene
+    sceneRef.current?.setGravity(nextGX, nextGY);
+    sceneRef.current?.setTimeScale(0.1 + Math.random() * 1.9); // Re-calculate to match state
+  };
 
   const spawnRandomShape = (x: number, y: number, overrideColor?: string) => {
     const shapeType = Math.floor(Math.random() * 5);
@@ -205,6 +306,7 @@ export default function App() {
   };
 
   const handleAddBox = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     const size = 30 + Math.random() * 40;
     sceneRef.current?.addBox(x, y, size, size, { 
@@ -216,6 +318,7 @@ export default function App() {
   };
 
   const handleAddCircle = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     const r = 20 + Math.random() * 20;
     sceneRef.current?.addCircle(x, y, r, { 
@@ -227,6 +330,7 @@ export default function App() {
   };
 
   const handleAddTriangle = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     const radius = 25 + Math.random() * 15;
     sceneRef.current?.addPolygon(x, y, 3, radius, { 
@@ -238,6 +342,7 @@ export default function App() {
   };
 
   const handleAddOctagon = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     const radius = 25 + Math.random() * 15;
     sceneRef.current?.addPolygon(x, y, 8, radius, { 
@@ -249,6 +354,7 @@ export default function App() {
   };
 
   const handleAddPentagon = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     const radius = 25 + Math.random() * 15;
     sceneRef.current?.addPolygon(x, y, 5, radius, { 
@@ -260,6 +366,7 @@ export default function App() {
   };
 
   const handleAddHexagon = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     const radius = 25 + Math.random() * 15;
     sceneRef.current?.addPolygon(x, y, 6, radius, { 
@@ -271,6 +378,7 @@ export default function App() {
   };
 
   const handleAddPoop = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     sceneRef.current?.addPoop(x, y, 20 + Math.random() * 10, {
       restitution,
@@ -280,6 +388,7 @@ export default function App() {
   };
 
   const handleAddAaron = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     // Use a high-quality nerd emoji as fallback since image generation failed
     // but the user's uploaded image path isn't known to the environment
@@ -297,6 +406,7 @@ export default function App() {
   };
   
   const handleAddCustomImage = (url: string) => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     sceneRef.current?.addAaron(x, y, 50, {
       restitution: 0.1,
@@ -313,6 +423,7 @@ export default function App() {
   };
 
   const handleAddSpring = () => {
+    saveToHistory();
     const { x, y } = getSpawnPos();
     sceneRef.current?.addSpring(x, y, x + 50, y, {
       color: accentColor,
@@ -334,6 +445,7 @@ export default function App() {
   };
 
   const handleTower = () => {
+    saveToHistory();
     const width = window.innerWidth;
     const sidebarWidth = width < 768 ? 0 : 320;
     const availableWidth = width - sidebarWidth;
@@ -350,6 +462,7 @@ export default function App() {
   };
 
   const handleRain = () => {
+    saveToHistory();
     // Increased particle count and better spread
     for (let i = 0; i < 50; i++) {
       setTimeout(() => {
@@ -376,6 +489,7 @@ export default function App() {
   };
 
   const handleFlood = () => {
+    saveToHistory();
     const width = window.innerWidth;
     const sidebarWidth = width < 768 ? 0 : 320;
     const availableWidth = width - sidebarWidth;
@@ -399,6 +513,7 @@ export default function App() {
   };
 
   const handleExplosion = () => {
+    saveToHistory();
     const width = window.innerWidth;
     const height = window.innerHeight;
     const sidebarWidth = width < 768 ? 0 : 320;
@@ -443,6 +558,7 @@ export default function App() {
 
   const handleDeleteBody = () => {
     if (selectedBody) {
+      saveToHistory();
       sceneRef.current?.removeBody(selectedBody);
       setSelectedBody(null);
     }
@@ -450,6 +566,7 @@ export default function App() {
 
   const handleSelectShapeColor = (color: string) => {
     if (selectedBody) {
+      saveToHistory();
       (selectedBody.render as any).fillStyle = color;
       (selectedBody.render as any).strokeStyle = color;
     }
@@ -457,6 +574,7 @@ export default function App() {
 
   const handleSelectShapeType = (type: string) => {
     if (selectedBody) {
+      saveToHistory();
       const { x, y } = selectedBody.position;
       const { x: vx, y: vy } = selectedBody.velocity;
       const angle = selectedBody.angle;
