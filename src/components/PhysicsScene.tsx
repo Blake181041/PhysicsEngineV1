@@ -110,6 +110,43 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       Matter.Composite.add(engineRef.current.world, aaron);
       return aaron;
     },
+    addSpring: (x1, y1, x2, y2, options: {
+      color?: string;
+      bodyA?: Partial<Matter.IBodyDefinition>;
+      bodyB?: Partial<Matter.IBodyDefinition>;
+      constraint?: Partial<Matter.IConstraintDefinition>;
+    } = {}) => {
+      const group = Matter.Body.nextGroup(true);
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--brand-accent').trim() || '#00ff9d';
+      
+      const bodyA = Matter.Bodies.circle(x1, y1, 10, { 
+        collisionFilter: { group: group },
+        render: { fillStyle: options.color || accent, strokeStyle: '#000', lineWidth: 1 },
+        ...options.bodyA 
+      } as Matter.IBodyDefinition);
+      
+      const bodyB = Matter.Bodies.circle(x2, y2, 10, { 
+        collisionFilter: { group: group },
+        render: { fillStyle: options.color || accent, strokeStyle: '#000', lineWidth: 1 },
+        ...options.bodyB 
+      } as Matter.IBodyDefinition);
+      
+      const constraint = Matter.Constraint.create({
+        bodyA: bodyA,
+        bodyB: bodyB,
+        stiffness: 0.2,
+        damping: 0.005,
+        render: {
+          visible: true,
+          lineWidth: 3,
+          strokeStyle: options.color || accent
+        },
+        ...options.constraint
+      } as Matter.IConstraintDefinition);
+      
+      Matter.Composite.add(engineRef.current.world, [bodyA, bodyB, constraint]);
+      return { bodyA, bodyB, constraint };
+    },
     removeBody: (body) => {
       Matter.Composite.remove(engineRef.current.world, body);
     },
