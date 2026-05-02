@@ -21,6 +21,7 @@ export interface PhysicsSceneHandle {
   setTimeScale: (scale: number) => void;
   setRenderOptions: (options: Partial<Matter.IRendererOptions>) => void;
   updateRainbowBodies: (color: string) => void;
+  getMousePos: () => { x: number; y: number };
 }
 
 interface PhysicsSceneProps {
@@ -37,6 +38,7 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
   const renderRef = useRef<Matter.Render | null>(null);
   const liquidRenderRef = useRef<Matter.Render | null>(null);
   const runnerRef = useRef<Matter.Runner | null>(null);
+  const mouseRef = useRef<Matter.Mouse | null>(null);
 
   useImperativeHandle(ref, () => ({
     addBox: (x, y, w, h, options = {}) => {
@@ -199,6 +201,12 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
           body.render.fillStyle = color;
         }
       });
+    },
+    getMousePos: () => {
+      if (mouseRef.current) {
+        return { x: mouseRef.current.position.x, y: mouseRef.current.position.y };
+      }
+      return { x: 0, y: 0 };
     }
   }));
 
@@ -271,6 +279,7 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
 
     // Mouse control on the main canvas
     const mouse = Matter.Mouse.create(render.canvas);
+    mouseRef.current = mouse;
     const mouseConstraint = Matter.MouseConstraint.create(engine, {
       mouse: mouse,
       constraint: {
