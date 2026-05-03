@@ -584,8 +584,18 @@ export default function App() {
   const handleSelectShapeColor = (color: string) => {
     if (selectedBody) {
       saveToHistory();
-      (selectedBody.render as any).fillStyle = color;
-      (selectedBody.render as any).strokeStyle = color;
+      if (color === 'rainbow') {
+        const isLiquid = selectedBody.label.includes('liquid');
+        selectedBody.label = isLiquid ? 'liquid-rainbow' : 'rainbow';
+      } else {
+        // Remove rainbow from label if picking static color
+        if (selectedBody.label.includes('rainbow')) {
+          selectedBody.label = selectedBody.label.replace('-rainbow', '').replace('rainbow', '');
+          if (selectedBody.label === '') selectedBody.label = 'Body';
+        }
+        (selectedBody.render as any).fillStyle = color;
+        (selectedBody.render as any).strokeStyle = color;
+      }
     }
   };
 
@@ -793,6 +803,7 @@ export default function App() {
                 onClose={() => setIsColorLibraryOpen(false)}
                 onSelectColor={handleSelectShapeColor}
                 currentColor={(selectedBody?.render as any)?.fillStyle || accentColor}
+                isRainbow={selectedBody?.label.includes('rainbow')}
               />
 
               <ShapeLibrary
