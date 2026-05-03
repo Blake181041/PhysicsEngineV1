@@ -199,6 +199,11 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
       const allBodies = Matter.Composite.allBodies(currentWorld);
       const nonStatic = allBodies.filter(b => !b.isStatic);
       Matter.Composite.remove(currentWorld, nonStatic);
+      
+      // Also remove all constraints (like springs) except for the mouse constraint
+      const allConstraints = Matter.Composite.allConstraints(currentWorld);
+      const toRemove = allConstraints.filter(c => c.label !== 'Mouse Constraint');
+      Matter.Composite.remove(currentWorld, toRemove);
     },
     setGravity: (x, y) => {
       engineRef.current.gravity.x = x;
@@ -254,9 +259,15 @@ const PhysicsScene = forwardRef<PhysicsSceneHandle, PhysicsSceneProps>(({ classN
     restoreState: (state: any[]) => {
       if (!engineRef.current) return;
       
+      const currentWorld = engineRef.current.world;
+      
       // Clear current non-static bodies
-      const bodies = Matter.Composite.allBodies(engineRef.current.world).filter(b => !b.isStatic);
-      Matter.Composite.remove(engineRef.current.world, bodies);
+      const bodies = Matter.Composite.allBodies(currentWorld).filter(b => !b.isStatic);
+      Matter.Composite.remove(currentWorld, bodies);
+      
+      // Clear current non-mouse constraints
+      const constraints = Matter.Composite.allConstraints(currentWorld).filter(c => c.label !== 'Mouse Constraint');
+      Matter.Composite.remove(currentWorld, constraints);
       
       // Recreate bodies from state
       state.forEach(data => {
