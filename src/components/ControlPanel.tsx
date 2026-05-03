@@ -307,7 +307,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95 flex items-center justify-center bg-[conic-gradient(from_0deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)]",
                 isRainbow ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-brand-border/30"
               )}
-              title="Rainbow Mode"
+              title="RGB Dynamic Theme"
             />
           </div>
 
@@ -335,16 +335,44 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   </div>
                   
                   <div className="grid grid-cols-5 gap-3">
+                    {/* Custom Collector in Library */}
+                    <div className="relative group">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className={cn(
+                          "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95 flex items-center justify-center bg-brand-bg",
+                          "border-brand-border hover:border-brand-accent/50"
+                        )}
+                        title="Custom Color"
+                      >
+                        <Plus className="w-4 h-4 text-brand-text/40 group-hover:text-brand-accent" />
+                      </button>
+                    </div>
+
+                    {/* RGB Toggle in Library */}
+                    <button
+                      onClick={() => {
+                        setIsRainbow(!isRainbow);
+                        setShowThemeMenu(false);
+                      }}
+                      className={cn(
+                        "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95 flex items-center justify-center bg-[conic-gradient(from_0deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)]",
+                        isRainbow ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-brand-border/30"
+                      )}
+                      title="RGB Dynamic Theme"
+                    />
+
                     {[...THEMES, ...EXTRA_THEMES].map((t) => (
                       <button
                         key={t.name}
                         onClick={() => {
                           setAccentColor(t.color);
+                          setIsRainbow(false);
                           setShowThemeMenu(false);
                         }}
                         className={cn(
                           "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95",
-                          accentColor === t.color ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-brand-border/30"
+                          accentColor === t.color && !isRainbow ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-brand-border/30"
                         )}
                         style={{ backgroundColor: t.color }}
                         title={t.name}
