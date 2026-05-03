@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 interface Theme {
@@ -35,6 +35,7 @@ interface ShapeColorLibraryProps {
   onClose: () => void;
   onSelectColor: (color: string) => void;
   currentColor: string;
+  isRainbow?: boolean;
 }
 
 export const ShapeColorLibrary: React.FC<ShapeColorLibraryProps> = ({
@@ -42,7 +43,14 @@ export const ShapeColorLibrary: React.FC<ShapeColorLibraryProps> = ({
   onClose,
   onSelectColor,
   currentColor,
+  isRainbow,
 }) => {
+  const colorInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onSelectColor(e.target.value);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -68,6 +76,40 @@ export const ShapeColorLibrary: React.FC<ShapeColorLibraryProps> = ({
             </div>
             
             <div className="grid grid-cols-5 gap-3">
+              {/* Custom Picker Button */}
+              <div className="relative group">
+                <button
+                  onClick={() => colorInputRef.current?.click()}
+                  className={cn(
+                    "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95 flex items-center justify-center bg-black",
+                    "border-[#222] hover:border-[#00ff9d]/50"
+                  )}
+                  title="Custom Color"
+                >
+                  <Plus className="w-4 h-4 text-white/40 group-hover:text-[#00ff9d]" />
+                </button>
+                <input 
+                  ref={colorInputRef}
+                  type="color" 
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  value={currentColor}
+                  onChange={handleCustomColorChange}
+                />
+              </div>
+
+              {/* RGB Toggle */}
+              <button
+                onClick={() => {
+                  onSelectColor('rainbow');
+                  onClose();
+                }}
+                className={cn(
+                  "w-full aspect-square rounded-sm border transition-all hover:scale-110 active:scale-95 flex items-center justify-center bg-[conic-gradient(from_0deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)]",
+                  isRainbow ? "border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]" : "border-[#222]"
+                )}
+                title="RGB Dynamic Theme"
+              />
+
               {[...THEMES, ...EXTRA_THEMES].map((t) => (
                 <button
                   key={t.name}
