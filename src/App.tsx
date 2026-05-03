@@ -152,12 +152,19 @@ export default function App() {
       const x = mousePos?.x || 0;
       const y = mousePos?.y || 0;
 
-      const commonOptions = {
-        restitution,
-        friction,
-        label: isRainbow ? 'rainbow' : undefined,
-        render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+      const getOptions = () => {
+        const color = e.altKey 
+          ? `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` 
+          : accentColor;
+        return {
+          restitution,
+          friction,
+          label: isRainbow ? 'rainbow' : undefined,
+          render: { fillStyle: color, strokeStyle: '#000', lineWidth: 1 }
+        };
       };
+
+      const currentOptions = getOptions();
 
       if (key === 'backspace' && e.altKey) {
         saveToHistory();
@@ -192,27 +199,29 @@ export default function App() {
         return;
       }
 
+      const overrideColor = e.altKey ? `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}` : undefined;
+
       switch (e.key) {
-        case '1': saveToHistory(); sceneRef.current?.addBox(x, y, 40, 40, commonOptions); break;
-        case '2': saveToHistory(); sceneRef.current?.addCircle(x, y, 25, commonOptions); break;
-        case '3': saveToHistory(); sceneRef.current?.addPolygon(x, y, 3, 25, commonOptions); break;
-        case '4': saveToHistory(); sceneRef.current?.addPolygon(x, y, 8, 25, commonOptions); break;
-        case '5': saveToHistory(); sceneRef.current?.addPoop(x, y, 20, { ...commonOptions, label: isRainbow ? 'rainbow' : 'poop' }); break;
+        case '1': saveToHistory(); sceneRef.current?.addBox(x, y, 40, 40, currentOptions); break;
+        case '2': saveToHistory(); sceneRef.current?.addCircle(x, y, 25, currentOptions); break;
+        case '3': saveToHistory(); sceneRef.current?.addPolygon(x, y, 3, 25, currentOptions); break;
+        case '4': saveToHistory(); sceneRef.current?.addPolygon(x, y, 8, 25, currentOptions); break;
+        case '5': saveToHistory(); sceneRef.current?.addPoop(x, y, 20, { ...currentOptions, label: isRainbow ? 'rainbow' : 'poop' }); break;
         case '6': 
           saveToHistory();
           sceneRef.current?.addSpring(x - 25, y, x + 25, y, {
-            color: accentColor,
-            bodyA: commonOptions,
-            bodyB: commonOptions,
+            color: e.altKey ? currentOptions.render.fillStyle : accentColor,
+            bodyA: currentOptions,
+            bodyB: currentOptions,
             constraint: { stiffness: 0.3, damping: 0.002 }
           });
           break;
-        case '7': saveToHistory(); sceneRef.current?.addPolygon(x, y, 5, 25, commonOptions); break;
-        case '8': saveToHistory(); sceneRef.current?.addPolygon(x, y, 6, 25, commonOptions); break;
-        case '9': saveToHistory(); handleTNT(x, y); break;
-        case '0': saveToHistory(); handleFlood(); break;
-        case '-': saveToHistory(); handleTower(); break;
-        case '=': saveToHistory(); handleRain(); break;
+        case '7': saveToHistory(); sceneRef.current?.addPolygon(x, y, 5, 25, currentOptions); break;
+        case '8': saveToHistory(); sceneRef.current?.addPolygon(x, y, 6, 25, currentOptions); break;
+        case '9': handleTNT(x, y, overrideColor); break;
+        case '0': handleFlood(overrideColor); break;
+        case '-': handleTower(overrideColor); break;
+        case '=': handleRain(overrideColor); break;
       }
     };
 
@@ -461,25 +470,27 @@ export default function App() {
     });
   };
 
-  const handleTower = () => {
+  const handleTower = (colorOverride?: string) => {
     saveToHistory();
     const width = window.innerWidth;
     const sidebarWidth = width < 768 ? 0 : 320;
     const availableWidth = width - sidebarWidth;
     const startX = sidebarWidth + (availableWidth / 2);
     const size = 40;
+    const color = colorOverride || accentColor;
     for (let i = 0; i < 8; i++) {
       sceneRef.current?.addBox(startX, window.innerHeight - (i * size) - 100, size, size, { 
         restitution, 
         friction,
         label: isRainbow ? 'rainbow' : undefined,
-        render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+        render: { fillStyle: color, strokeStyle: '#000', lineWidth: 1 }
       });
     }
   };
 
-  const handleRain = () => {
+  const handleRain = (colorOverride?: string) => {
     saveToHistory();
+    const color = colorOverride || accentColor;
     // Increased particle count and better spread
     for (let i = 0; i < 50; i++) {
       setTimeout(() => {
@@ -493,7 +504,7 @@ export default function App() {
           friction,
           density: 0.001,
           label: isRainbow ? 'liquid-rainbow' : 'liquid',
-          render: { fillStyle: accentColor, strokeStyle: '#000', lineWidth: 1 }
+          render: { fillStyle: color, strokeStyle: '#000', lineWidth: 1 }
         });
       }, i * 40);
     }
@@ -505,11 +516,12 @@ export default function App() {
     setIsMenuOpen(true);
   };
 
-  const handleFlood = () => {
+  const handleFlood = (colorOverride?: string) => {
     saveToHistory();
     const width = window.innerWidth;
     const sidebarWidth = width < 768 ? 0 : 320;
     const availableWidth = width - sidebarWidth;
+    const color = colorOverride || accentColor;
     
     const count = 200; // More particles
     const radius = 10; // Larger particles survive the filter better
@@ -523,7 +535,7 @@ export default function App() {
           velocity: { x: (Math.random() - 0.5) * 2, y: 5 }, // Initial downward velocity
           density: 0.005, // Slightly lighter so they don't just sink like lead
           label: isRainbow ? 'liquid-rainbow' : 'liquid',
-          render: { fillStyle: accentColor, strokeStyle: 'transparent' }
+          render: { fillStyle: color, strokeStyle: 'transparent' }
         });
       }, i * 15); // Faster stream
     }
@@ -635,14 +647,15 @@ export default function App() {
     }
   };
 
-  const handleTNT = (overrideX?: number, overrideY?: number) => {
+  const handleTNT = (overrideX?: number, overrideY?: number, colorOverride?: string) => {
     const { x, y } = (overrideX !== undefined && overrideY !== undefined) ? { x: overrideX, y: overrideY } : getSpawnPos();
     const size = 50;
+    const baseColor = colorOverride || '#ff0000';
     
     const tnt = sceneRef.current?.addBox(x, y, size, size, {
       restitution: 0.1,
       label: isRainbow ? 'rainbow' : undefined,
-      render: { fillStyle: '#ff0000', strokeStyle: '#fff', lineWidth: 2 }
+      render: { fillStyle: baseColor, strokeStyle: '#fff', lineWidth: 2 }
     });
 
     if (!tnt) return;
@@ -653,7 +666,7 @@ export default function App() {
       ticks++;
       // Blink effect
       if (tnt.render) {
-        tnt.render.fillStyle = ticks % 2 === 0 ? '#ff0000' : '#ffffff';
+        tnt.render.fillStyle = ticks % 2 === 0 ? baseColor : '#ffffff';
       }
       
       if (ticks >= maxTicks) {
