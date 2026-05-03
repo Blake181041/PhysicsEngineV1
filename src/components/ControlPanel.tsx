@@ -72,6 +72,113 @@ const EXTRA_THEMES = [
   { name: 'Yellow', color: '#ffea00' },
 ];
 
+interface SliderProps {
+  label: string;
+  icon?: React.ReactNode;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (val: number) => void;
+  accentColor: string;
+  formatValue?: (val: number) => string;
+}
+
+const Slider: React.FC<SliderProps> = ({ 
+  label, 
+  icon, 
+  value, 
+  min, 
+  max, 
+  step, 
+  onChange, 
+  accentColor,
+  formatValue = (v) => v.toString()
+}) => {
+  const [internalValue, setInternalValue] = React.useState(value);
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  // Sync internal value when prop changes externally (e.g. randomize)
+  React.useEffect(() => {
+    if (!isDragging) {
+      setInternalValue(value);
+    }
+  }, [value, isDragging]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setInternalValue(val);
+    onChange(val); // Real-time feedback
+  };
+
+  const handlePointerUp = () => {
+    setIsDragging(false);
+    // Snap to nearest step
+    const snapped = Math.round(internalValue / step) * step;
+    const bounded = Math.min(max, Math.max(min, snapped));
+    setInternalValue(bounded);
+    onChange(bounded);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
+        <div className="flex items-center gap-1">
+          {icon}
+          <span>{label}</span>
+        </div>
+        <span style={{ color: accentColor }}>{formatValue(internalValue)}</span>
+      </div>
+      <div className="relative h-6 flex items-center group">
+        {/* Track */}
+        <div className="absolute w-full h-[2px] bg-brand-border/40 rounded-full overflow-hidden">
+          <div 
+            className="h-full" 
+            style={{ 
+              width: `${((internalValue - min) / (max - min)) * 100}%`,
+              backgroundColor: accentColor
+            }} 
+          />
+        </div>
+        {/* Input Overlay */}
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step / 10} // allow smoother drag than the final step
+          value={internalValue}
+          onPointerDown={() => setIsDragging(true)}
+          onPointerUp={handlePointerUp}
+          onChange={handleChange}
+          className="absolute w-full h-6 appearance-none bg-transparent cursor-pointer z-10 
+            [&::-webkit-slider-thumb]:appearance-none 
+            [&::-webkit-slider-thumb]:w-4 
+            [&::-webkit-slider-thumb]:h-4 
+            [&::-webkit-slider-thumb]:rounded-full 
+            [&::-webkit-slider-thumb]:border-2 
+            [&::-webkit-slider-thumb]:border-brand-surface
+            [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(0,0,0,0.5)]
+            [&::-moz-range-thumb]:w-4 
+            [&::-moz-range-thumb]:h-4 
+            [&::-moz-range-thumb]:rounded-full 
+            [&::-moz-range-thumb]:border-2 
+            [&::-moz-range-thumb]:border-brand-surface
+            [&::-moz-range-thumb]:shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+          style={{ 
+            // @ts-ignore
+            '--thumb-color': accentColor 
+          } as React.CSSProperties}
+        />
+        {/* Visual Thumb (using CSS to avoid input thumb limitations) */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          input[type=range]::-webkit-slider-thumb { background-color: ${accentColor} !important; }
+          input[type=range]::-moz-range-thumb { background-color: ${accentColor} !important; }
+        ` }} />
+      </div>
+    </div>
+  );
+};
+
 const ControlPanel: React.FC<ControlPanelProps> = ({
   onAddBox,
   onAddCircle,
@@ -506,36 +613,26 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <div>
           <label className="text-[10px] font-mono uppercase tracking-widest text-brand-text/50 mb-4 block">Physical Properties</label>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
-                <span>Bounciness</span>
-                <span className="text-brand-accent">{(restitution * 100).toFixed(0)}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="1.2"
-                step="0.1"
-                value={restitution}
-                onChange={(e) => setRestitution(parseFloat(e.target.value))}
-                className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
-                <span>Friction</span>
-                <span className="text-brand-accent">{(friction * 100).toFixed(0)}%</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={friction}
-                onChange={(e) => setFriction(parseFloat(e.target.value))}
-                className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
-              />
-            </div>
+            <Slider 
+              label="Bounciness"
+              value={restitution}
+              min={0}
+              max={1.2}
+              step={0.1}
+              onChange={setRestitution}
+              accentColor={accentColor}
+              formatValue={(v) => `${(v * 100).toFixed(0)}%`}
+            />
+            <Slider 
+              label="Friction"
+              value={friction}
+              min={0}
+              max={1}
+              step={0.01}
+              onChange={setFriction}
+              accentColor={accentColor}
+              formatValue={(v) => `${(v * 100).toFixed(0)}%`}
+            />
           </div>
         </div>
 
@@ -543,55 +640,47 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <div>
           <label className="text-[10px] font-mono uppercase tracking-widest text-brand-text/50 mb-4 block">Environment</label>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
-                <div className="flex items-center gap-1">
-                  <MoveRight 
-                    className={cn(
-                      "w-3 h-3 text-brand-accent transition-transform duration-500",
-                      gravityX < 0 ? "rotate-180" : "rotate-0",
-                      gravityX === 0 && "opacity-20"
-                    )}
-                  />
-                  <span>Gravity X</span>
-                </div>
-                <span className="text-brand-accent">{gravityX.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min="-2"
-                max="2"
-                step="0.1"
-                value={gravityX}
-                onChange={(e) => setGravityX(parseFloat(e.target.value))}
-                className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
-              />
-            </div>
+            <Slider 
+              label="Gravity X"
+              value={gravityX}
+              min={-2}
+              max={2}
+              step={0.1}
+              onChange={setGravityX}
+              accentColor={accentColor}
+              formatValue={(v) => v.toFixed(1)}
+              icon={
+                <MoveRight 
+                  className={cn(
+                    "w-3 h-3 text-brand-accent transition-transform duration-500",
+                    gravityX < 0 ? "rotate-180" : "rotate-0",
+                    gravityX === 0 && "opacity-20"
+                  )}
+                  style={{ color: gravityX === 0 ? undefined : accentColor }}
+                />
+              }
+            />
             
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
-                <div className="flex items-center gap-1">
-                  <MoveDown 
-                    className={cn(
-                      "w-3 h-3 text-brand-accent transition-transform duration-500",
-                      gravityY < 0 ? "rotate-180" : "rotate-0",
-                      gravityY === 0 && "opacity-20"
-                    )}
-                  />
-                  <span>Gravity Y</span>
-                </div>
-                <span className="text-brand-accent">{gravityY.toFixed(1)}</span>
-              </div>
-              <input
-                type="range"
-                min="-2"
-                max="2"
-                step="0.1"
-                value={gravityY}
-                onChange={(e) => setGravityY(parseFloat(e.target.value))}
-                className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
-              />
-            </div>
+            <Slider 
+              label="Gravity Y"
+              value={gravityY}
+              min={-2}
+              max={2}
+              step={0.1}
+              onChange={setGravityY}
+              accentColor={accentColor}
+              formatValue={(v) => v.toFixed(1)}
+              icon={
+                <MoveDown 
+                  className={cn(
+                    "w-3 h-3 text-brand-accent transition-transform duration-500",
+                    gravityY < 0 ? "rotate-180" : "rotate-0",
+                    gravityY === 0 && "opacity-20"
+                  )}
+                  style={{ color: gravityY === 0 ? undefined : accentColor }}
+                />
+              }
+            />
 
             {/* Mobile Tilt Toggle */}
             <div className="md:hidden pt-2 border-t border-brand-border/30">
@@ -660,41 +749,29 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </AnimatePresence>
             </div>
 
-            <div className="space-y-2 pt-2 border-t border-brand-border/30">
-              <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
-                <div className="flex items-center gap-1">
-                  <Activity className="w-3 h-3 text-brand-accent" />
-                  <span>Time Scale</span>
-                </div>
-                <span className="text-brand-accent">{timeScale.toFixed(2)}x</span>
-              </div>
-              <input
-                type="range"
-                min="0.1"
-                max="2"
-                step="0.1"
+            <div className="pt-2 border-t border-brand-border/30 space-y-4">
+              <Slider 
+                label="Time Scale"
                 value={timeScale}
-                onChange={(e) => setTimeScale(parseFloat(e.target.value))}
-                className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
+                min={0.1}
+                max={2}
+                step={0.1}
+                onChange={setTimeScale}
+                accentColor={accentColor}
+                formatValue={(v) => `${v.toFixed(2)}x`}
+                icon={<Activity className="w-3 h-3" style={{ color: accentColor }} />}
               />
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-tighter">
-                <div className="flex items-center gap-1">
-                  <Zap className="w-3 h-3 text-brand-accent" />
-                  <span>TNT Explosion Force</span>
-                </div>
-                <span className="text-brand-accent">{tntForce.toFixed(1)}x</span>
-              </div>
-              <input
-                type="range"
-                min="0.5"
-                max="10"
-                step="0.5"
+              <Slider 
+                label="TNT Explosion Force"
                 value={tntForce}
-                onChange={(e) => setTntForce(parseFloat(e.target.value))}
-                className="w-full h-1 bg-brand-border appearance-none cursor-pointer accent-brand-accent"
+                min={0.5}
+                max={10}
+                step={0.5}
+                onChange={setTntForce}
+                accentColor={accentColor}
+                formatValue={(v) => `${v.toFixed(1)}x`}
+                icon={<Zap className="w-3 h-3" style={{ color: accentColor }} />}
               />
             </div>
           </div>
